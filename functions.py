@@ -3,8 +3,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import sys
+from matplotlib.ticker import FuncFormatter
+import time
+from datetime import datetime
 #%%
-def read_txt(path, parent_path, file_names):
+def read_txt(path, parent_path, file_names, separation):
     new_dict = {}
 
     ParentPath = os.path.abspath(parent_path)
@@ -17,7 +20,7 @@ def read_txt(path, parent_path, file_names):
         for file in files:
             if name in file:
                 with open(os.path.join(path, file)) as f:
-                    df = pd.read_table(f, sep = ',')
+                    df = pd.read_table(f, sep = separation)
                     new_dict[name] = df
     
     return new_dict
