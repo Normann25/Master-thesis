@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import sys
 #%%
 def read_txt(path, parent_path, file_names):
     new_dict = {}
@@ -16,7 +17,7 @@ def read_txt(path, parent_path, file_names):
         for file in files:
             if name in file:
                 with open(os.path.join(path, file)) as f:
-                df = pd.read_table(f, sep = '\t')
-                new_dict[name] = df
+                    df = pd.read_table(f, sep = ',')
+                    new_dict[name] = df
     
     return new_dict
