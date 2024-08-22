@@ -24,3 +24,16 @@ def read_txt(path, parent_path, file_names, separation):
                     new_dict[name] = df
     
     return new_dict
+
+def read_txt_acsm(path, parent_path, file_names, separation):
+    new_dict = {}
+    data_dict = read_txt(path, parent_path, file_names, separation)
+
+    for key in data_dict.keys():
+        df = data_dict[key]
+        df.columns = ['Time', 'org_conc']
+        df['Time'] = df['Time'].str.split().str[1] + pd.Timedelta('2 hours')
+        df['Time'] = pd.to_timedelta(df['Time']).astype('timedelta64[s]')
+        new_dict[key] = df
+    
+    return new_dict
