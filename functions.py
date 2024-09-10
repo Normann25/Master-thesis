@@ -6,6 +6,7 @@ import sys
 from matplotlib.ticker import FuncFormatter
 import time
 from datetime import datetime
+import matplotlib.dates as mdates
 #%%
 def read_txt(path, parent_path, file_names, separation):
     new_dict = {}
@@ -76,8 +77,15 @@ def plot_PAH_ACSM(ax, data_dict, dict_keys):
         ax[i].plot(df['Time'], df['PAH total'], lw = 1)
 
 
-        formatter = FuncFormatter(lambda s, x: time.strftime('%H:%M', time.gmtime(s)))
-        ax[i].xaxis.set_major_formatter(formatter)
+        # Set the x-axis major formatter to a date format
+        ax[i].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+
+        # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+        ax[i].xaxis.set_major_locator(mdates.AutoDateLocator())
+
+        # Rotate and format date labels
+        plt.setp(ax[i].xaxis.get_majorticklabels()) #, rotation=45, ha='right')
+
         ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
 
         ax[i].set_xlabel('Time', fontsize = 8)
