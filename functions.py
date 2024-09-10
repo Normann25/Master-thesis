@@ -38,6 +38,14 @@ def read_txt_acsm(path, parent_path, file_names, separation):
     
     return new_dict
 
+def format_timestamps(timestamps, old_format="%m/%d/%Y %H:%M:%S.%f", new_format="%d/%m/%Y %H:%M:%S.%f"):
+    new_timestamps = []
+    for timestamp in timestamps:
+        old_datetime = datetime.strptime(timestamp, old_format)
+        new_datetime = old_datetime.strftime(new_format)
+        new_timestamps.append(new_datetime)
+    return pd.to_datetime(new_timestamps, format="%d/%m/%Y %H:%M:%S.%f")
+
 def read_data(path, parent_path, time_label):
     parentPath = os.path.abspath(parent_path)
     if parentPath not in sys.path:
@@ -50,12 +58,12 @@ def read_data(path, parent_path, time_label):
         name = file.split('.')[0]
         with open(os.path.join(path, file)) as f:
             df = pd.read_csv(f, sep = ';', decimal=',')
+            df[time_label] = format_timestamps(df[time_label])
             df = df.dropna()
 
             df['PAH total'] = pd.to_numeric(df['PAH total'], errors = 'coerce')
 
-            df[time_label] = df[time_label].str.split().str[1] + pd.Timedelta('2 hours')
-            df['Time'] = pd.to_timedelta(df[time_label]).astype('timedelta64[s]')
+            df['Time'] = df[time_label] + pd.Timedelta(hours=2)
 
         data_dict[name] = df
     
