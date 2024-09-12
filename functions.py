@@ -33,13 +33,13 @@ def read_txt_acsm(path, parent_path, file_names, separation):
     for key in data_dict.keys():
         df = data_dict[key]
         df.columns = ['Time', 'org_conc']
-        df['Time'] = df['Time'].str.split().str[1] + pd.Timedelta('2 hours')
-        df['Time'] = pd.to_timedelta(df['Time']).astype('timedelta64[s]')
+        df['Time'] = format_timestamps(df['Time'], "%Y/%m/%d %H:%M:%S")
+        df['Time'] = df['Time'] + pd.Timedelta(hours=2)
         new_dict[key] = df
     
     return new_dict
 
-def format_timestamps(timestamps, old_format="%m/%d/%Y %H:%M:%S.%f", new_format="%d/%m/%Y %H:%M:%S.%f"):
+def format_timestamps(timestamps, old_format, new_format="%d/%m/%Y %H:%M:%S.%f"):
     new_timestamps = []
     for timestamp in timestamps:
         old_datetime = datetime.strptime(timestamp, old_format)
@@ -59,7 +59,7 @@ def read_data(path, parent_path, time_label):
         name = file.split('.')[0]
         with open(os.path.join(path, file)) as f:
             df = pd.read_csv(f, sep = ';', decimal=',')
-            df[time_label] = format_timestamps(df[time_label])
+            df[time_label] = format_timestamps(df[time_label], "%m/%d/%Y %H:%M:%S.%f")
             df = df.dropna()
 
             df['PAH total'] = pd.to_numeric(df['PAH total'], errors = 'coerce')
@@ -70,12 +70,12 @@ def read_data(path, parent_path, time_label):
     
     return data_dict
 
-def plot_PAH_ACSM(ax, data_dict, dict_keys):
+def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
         df = data_dict[dict_key]
         #for j, key in enumerate(df.keys()[1:]):
-        ax[i].plot(df['Time'], df['PAH total'], lw = 1)
-
+        ax[i].plot(df['Time'], df[concentration], lw = 1)
+    
 
         # Set the x-axis major formatter to a date format
         ax[i].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
@@ -86,8 +86,11 @@ def plot_PAH_ACSM(ax, data_dict, dict_keys):
         # Rotate and format date labels
         plt.setp(ax[i].xaxis.get_majorticklabels()) #, rotation=45, ha='right')
 
-        ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+        
 
-        ax[i].set_xlabel('Time', fontsize = 8)
-        ax[i].set_ylabel('PAH$_{est}$ / $\mu$g/m$^{3}$', fontsize = 8)
+        ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
         ax[i].set_title(dict_key, fontsize = 9)
+    fig.supxlabel('Time', fontsize = 10)
+    fig.supylabel(ylabel, fontsize = 10)
+    
+        
