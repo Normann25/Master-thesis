@@ -161,4 +161,41 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     fig.supxlabel('Time', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
     
-        
+def discmini_single_timeseries(ax, df, n):
+    p1, = ax.plot(df['Time'], df['Number'], lw = 1, label = 'Number concentration', color = 'tab:blue')
+    ax2 = ax.twinx()
+    p2, = ax2.plot(df['Time'], df['LDSA'], lw = 0.5, ls = '--', label = 'LDSA', color = 'red')
+    ax.set_zorder(ax2.get_zorder()+1)
+    ax.set_frame_on(False)
+
+    # Set the x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    ax2.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels())
+    plt.setp(ax2.xaxis.get_majorticklabels())
+
+    ylim = np.array(ax.get_ylim())
+    ratio = ylim / np.sum(np.abs(ylim))
+    scale = ratio / np.min(np.abs(ratio))
+    scale = scale / n
+    ax2.set_ylim(np.max(np.abs(ax2.get_ylim())) * scale)
+
+    ax.tick_params(axis = 'y', labelcolor = p1.get_color(), labelsize = 8)
+    ax.tick_params(axis = 'x', labelsize = 8)
+    ax2.tick_params(axis = 'y', labelcolor = p2.get_color(), labelsize = 8)
+
+    ax.legend(frameon = False, fontsize = 8, handles = [p1, p2])
+
+    ax.set_xlabel('Time', fontsize = 9)
+    ax.set_ylabel('Concentration / #/cm$^{3}$', color = p1.get_color(), fontsize = 9)
+    ax2.set_ylabel('LDSA / $\mu$m$^{2}$/cm$^{3}$', color = p2.get_color(), fontsize = 9)       
+
+def discmini_multi_timeseries(ax, data, dict_keys, n, titles):
+    for i, key in enumerate(dict_keys):
+        df = data[key]
+        discmini_single_timeseries(ax[i], df, n[i])
+        ax[i].set_title(titles[i])
