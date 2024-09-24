@@ -97,6 +97,7 @@ def read_csv_BC(path, parent_path):
                 new_df = new_df.dropna()
                 for key in new_df.keys():
                     if 'BCc' in key:
+                        new_df[key][new_df[key] < 0] = 0
                         new_df[key] = new_df[key] / 1000
 
             data_dict[name] = new_df
