@@ -158,7 +158,7 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
 
         ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
         ax[i].set_title(dict_key, fontsize = 9)
-    fig.supxlabel('Time', fontsize = 10)
+    fig.supxlabel('Time [HH:MM]', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
     
 def discmini_single_timeseries(ax, df, n):
@@ -190,7 +190,7 @@ def discmini_single_timeseries(ax, df, n):
 
     ax.legend(frameon = False, fontsize = 8, handles = [p1, p2])
 
-    ax.set_xlabel('Time', fontsize = 9)
+    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
     ax.set_ylabel('Concentration / #/cm$^{3}$', color = p1.get_color(), fontsize = 9)
     ax2.set_ylabel('LDSA / $\mu$m$^{2}$/cm$^{3}$', color = p2.get_color(), fontsize = 9)       
 
@@ -199,3 +199,20 @@ def discmini_multi_timeseries(ax, data, dict_keys, n, titles):
         df = data[key]
         discmini_single_timeseries(ax[i], df, n[i])
         ax[i].set_title(titles[i])
+
+def ma200_single_timeseries(ax, df):
+    ax.plot(df['Time'], df['IR BCc'])
+
+    formatter = FuncFormatter(lambda s, x: time.strftime('%H:%M', time.gmtime(s)))
+    ax.xaxis.set_major_formatter(formatter)
+    ax.set_xticklabels(ax.get_xticklabels(), size = 8)
+
+    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
+    ax.set_ylabel('Concentration / $\mu$g/m$^{3}$', fontsize = 9)
+
+def ma200_multi_timeseries(ax, data, dict_keys):
+    for i, key in enumerate(dict_keys):
+        df = data[key]
+        ma200_single_timeseries(ax[i], df)
+        title = 'Bag ' + str(i+1) + ', ' + key.split('_')[0]
+        ax[i].set_title(title)
