@@ -214,5 +214,5 @@ def ma200_multi_timeseries(ax, data, dict_keys):
     for i, key in enumerate(dict_keys):
         df = data[key]
         ma200_single_timeseries(ax[i], df)
-        title = 'Bag ' + str(i+1) + ', ' + key.split('_')[0]
+        title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
         ax[i].set_title(title)
