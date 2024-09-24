@@ -235,10 +235,16 @@ def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
     mean_df = pd.DataFrame()
     for i, key in enumerate(dict_keys):
         mean_conc = []
+        time_start = []
+        time_end = []
         for j, idx in enumerate(idx_array[i][::2]):
-            new_df = data[key].iloc[int(idx):int(idx_array[i][j*2+1]), :]   
+            new_df = data[key].iloc[int(idx):int(idx_array[i][j*2+1]), :] 
+            time_start.append(data[key][timelabel][int(idx)]) 
+            time_end.append(data[key][timelabel][int(idx_array[i][j*2+1])])
             mean = new_df[concentration].mean()
             mean_conc.append(mean)
+        mean_df[key + ' time start'] = time_start
+        mean_df[key + ' time end'] = time_end
         mean_df[key] = mean_conc
 
     mean_df.to_csv(path)
