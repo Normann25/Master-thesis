@@ -217,3 +217,30 @@ def ma200_multi_timeseries(ax, data, dict_keys):
         ma200_single_timeseries(ax[i], df)
         title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
         ax[i].set_title(title)
+
+def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
+    pd.options.mode.chained_assignment = None 
+    
+    idx_array = []
+    for i, key in enumerate(dict_keys):
+        idx_ts = np.zeros(len(timestamps[i]))
+        for j, ts in enumerate(timestamps[i]):
+            for k, time in enumerate(data[key][timelabel]):
+                if ts in str(time):
+                    idx_ts[j] += k
+        idx_array.append(idx_ts)
+    
+        print(idx_ts)
+
+    mean_df = pd.DataFrame()
+    for i, key in enumerate(dict_keys):
+        mean_conc = []
+        for j, idx in enumerate(idx_array[i][::2]):
+            new_df = data[key].iloc[int(idx):int(idx_array[i][j*2+1]), :]   
+            mean = new_df[concentration].mean()
+            mean_conc.append(mean)
+        mean_df[key] = mean_conc
+
+    mean_df.to_csv(path)
+
+    return mean_df
