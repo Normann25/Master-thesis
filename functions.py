@@ -106,7 +106,7 @@ def read_LCS_data(path, parent_path, time_label):
         df[time_label] = format_timestamps(df[time_label])
         
         # Drop NA values
-        df = df.dropna()
+        # df = df.dropna()
         
         # Convert additional columns to numeric if they exist
         if 'SPS30_PM2.5' in df.columns:
@@ -152,7 +152,7 @@ def read_LCS_weather_data(path, parent_path, time_label):
             df[time_label] = format_timestamps(df[time_label])
             
             # Drop NA values
-            df = df.dropna()
+            # df = df.dropna()
             
             # Convert additional columns to numeric if they exist
             if 'Conc' in df.columns:
@@ -263,19 +263,21 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
 
-def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
-    pd.options.mode.chained_assignment = None 
+def get_mean_conc(data, dict_keys, timelabel, date, timestamps, concentration, path):
+    pd.options.mode.chained_assignment = None  # suppress warnings
     
     idx_array = []
-    for i, key in enumerate(dict_keys):
-        idx_ts = np.zeros(len(timestamps[i]))
-        for j, ts in enumerate(timestamps[i]):
+    for key in dict_keys:
+        idx_ts = np.zeros(len(timestamps))
+        for j, ts in enumerate(timestamps):
             for k, time in enumerate(data[key][timelabel]):
-                if ts in str(time):
-                    idx_ts[j] += k
+                full_time = str(time)
+                search_time = date + ts
+                if search_time in full_time:
+                    idx_ts[j] = k  # store the first match
+                    break  # stop after finding the first match
         idx_array.append(idx_ts)
-    
-        print(idx_ts)
+        print(f"Indexes for {key}: {idx_ts}")
 
     mean_df = pd.DataFrame()
     for i, key in enumerate(dict_keys):
@@ -283,11 +285,18 @@ def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
         time_start = []
         time_end = []
         for j, idx in enumerate(idx_array[i][::2]):
-            new_df = data[key].iloc[int(idx):int(idx_array[i][j*2+1]), :] 
-            time_start.append(data[key][timelabel][int(idx)]) 
-            time_end.append(data[key][timelabel][int(idx_array[i][j*2+1])])
-            mean = new_df[concentration].mean()
-            mean_conc.append(mean)
+            idx_start = int(idx)
+            idx_end = int(idx_array[i][j * 2 + 1])
+            
+            if idx_start < len(data[key]) and idx_end <= len(data[key]):
+                new_df = data[key].iloc[idx_start:idx_end, :]
+                time_start.append(data[key][timelabel].iloc[idx_start])
+                time_end.append(data[key][timelabel].iloc[idx_end])
+                mean = new_df[concentration].mean()
+                mean_conc.append(mean)
+            else:
+                print(f"Index out of bounds for {key}: start={idx_start}, end={idx_end}")
+
         mean_df[key + ' time start'] = time_start
         mean_df[key + ' time end'] = time_end
         mean_df[key] = mean_conc
