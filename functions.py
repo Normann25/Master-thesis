@@ -85,38 +85,38 @@ def read_LCS_data(path, parent_path, time_label):
     data_dict = {}
 
     for file in files:
-        if file.lower().endswith('.csv'):
+        if '.CSV' in file:
             name = file.split('.')[0]
-            try:
-                with open(os.path.join(path, file)) as f:
-                    # Read the CSV file
-                    df = pd.read_csv(f, sep=';', decimal=',') if file.endswith('.CSV') else pd.read_csv(f)
+            with open(os.path.join(path, file)) as f:
+                df = pd.read_csv(f, sep=';', decimal=',')
+        if '.csv' in file:
+            name = file.split('.')[0]
+            with open(os.path.join(path, file)) as f:
+                df = pd.read_csv(f, sep=';', decimal='.')
 
                     # Debug: Print the columns in the DataFrame
-                    print(f"Columns in {file}: {df.columns.tolist()}")
+                    # print(f"Columns in {file}: {df.columns.tolist()}")
                     
-                    # Check if the time_label exists in the DataFrame
-                    if time_label not in df.columns:
-                        print(f"Column '{time_label}' not found in file {file}. Available columns: {df.columns.tolist()}")
-                        continue  # Skip to the next file
+                    # # Check if the time_label exists in the DataFrame
+                    # if time_label not in df.columns:
+                    #     print(f"Column '{time_label}' not found in file {file}. Available columns: {df.columns.tolist()}")
+                    #     continue  # Skip to the next file
                     
-                    # Process the timestamp column
-                    df[time_label] = format_timestamps(df[time_label])
-                    
-                    # Drop NA values
-                    df = df.dropna()
-                    
-                    # Convert additional columns to numeric if they exist
-                    if 'SPS30_PM2.5' in df.columns:
-                        df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
-                    
-                    # Create a timestamp with timezone adjustment
-                    df['timestamp'] = df[time_label] + pd.Timedelta(hours=2)
+        # Process the timestamp column
+        df[time_label] = format_timestamps(df[time_label])
+        
+        # Drop NA values
+        df = df.dropna()
+        
+        # Convert additional columns to numeric if they exist
+        if 'SPS30_PM2.5' in df.columns:
+            df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
+        
+        # Create a timestamp with timezone adjustment
+        df['timestamp'] = df[time_label] + pd.Timedelta(hours=2)
 
-                    # Store the DataFrame in the data_dict with its name as key
-                    data_dict[name] = df
-            except Exception as e:
-                print(f"Error processing file {file}: {e}")
+        # Store the DataFrame in the data_dict with its name as key
+        data_dict[name] = df
 
     return data_dict
 
@@ -131,38 +131,38 @@ def read_LCS_weather_data(path, parent_path, time_label):
     data_dict = {}
 
     for file in files:
-        if file.lower().endswith('.csv'):
+        if '.CSV' in file:
             name = file.split('.')[0]
-            try:
-                with open(os.path.join(path, file)) as f:
-                    # Read the CSV file
-                    df = pd.read_csv(f, sep=';', decimal='.') if file.endswith('.CSV') else pd.read_csv(f)
+            with open(os.path.join(path, file)) as f:
+                df = pd.read_csv(f, sep=';', decimal=',')
+        if '.csv' in file:
+            name = file.split('.')[0]
+            with open(os.path.join(path, file)) as f:
+                df = pd.read_csv(f, sep=';', decimal='.')
 
-                    # Debug: Print the columns in the DataFrame
-                    print(f"Columns in {file}: {df.columns.tolist()}")
-                    
-                    # Check if the time_label exists in the DataFrame
-                    if time_label not in df.columns:
-                        print(f"Column '{time_label}' not found in file {file}. Available columns: {df.columns.tolist()}")
-                        continue  # Skip to the next file
-                    
-                    # Process the timestamp column
-                    df[time_label] = format_timestamps(df[time_label])
-                    
-                    # Drop NA values
-                    df = df.dropna()
-                    
-                    # Convert additional columns to numeric if they exist
-                    if 'Conc' in df.columns:
-                        df['Conc'] = pd.to_numeric(df['Conc'], errors='coerce')
-                    
-                    # Create a timestamp with timezone adjustment
-                    df['timestamp'] = df[time_label] + pd.Timedelta(hours=2)
+            # # Debug: Print the columns in the DataFrame
+            # print(f"Columns in {file}: {df.columns.tolist()}")
+            
+            # # Check if the time_label exists in the DataFrame
+            # if time_label not in df.columns:
+            #     print(f"Column '{time_label}' not found in file {file}. Available columns: {df.columns.tolist()}")
+            #     continue  # Skip to the next file
+            
+            # Process the timestamp column
+            df[time_label] = format_timestamps(df[time_label])
+            
+            # Drop NA values
+            df = df.dropna()
+            
+            # Convert additional columns to numeric if they exist
+            if 'Conc' in df.columns:
+                df['Conc'] = pd.to_numeric(df['Conc'], errors='coerce')
+            
+            # Create a timestamp with timezone adjustment
+            df['timestamp'] = df[time_label] + pd.Timedelta(hours=2)
 
-                    # Store the DataFrame in the data_dict with its name as key
-                    data_dict[name] = df
-            except Exception as e:
-                print(f"Error processing file {file}: {e}")
+            # Store the DataFrame in the data_dict with its name as key
+            data_dict[name] = df
 
     return data_dict
 
@@ -211,42 +211,87 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     fig.supxlabel('Time', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
     
-
-
-def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, ylabel):
+def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration, ylabel):
     # Convert start_time and end_time to datetime objects if they are strings
     start_time = pd.to_datetime(start_time)
     end_time = pd.to_datetime(end_time)
 
+    # Extract the timestamp and concentration data
+    time = pd.to_datetime(data_dict[dict_key]['timestamp'])  # Ensure this is datetime
+    Conc = np.array(data_dict[dict_key][concentration])
+
+    # Create a filter for the time interval
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    # Apply the time filter to both time and concentration data
+    time_filtered = time[time_filter]
+    Conc_filtered = Conc[time_filter]
+
+    # Plot the filtered data
+    ax.plot(time_filtered, Conc_filtered, lw=1)
+
+    # Set x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+
+    # Set the locator for the x-axis
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels())
+
+    # Set tick parameters and title
+    ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
+    ax.set_title(dict_key, fontsize=9)
+    ax.set_ylabel(ylabel, fontsize = 8)
+
+def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
-        # Extract the timestamp and concentration data
-        time = pd.to_datetime(data_dict[dict_key]['timestamp'])  # Ensure this is datetime
-        Conc = np.array(data_dict[dict_key][concentration])
+        plot_LCS_single(ax[i], data_dict, dict_key, start_time, end_time, concentration, ylabel[i])
 
-        # Create a filter for the time interval
-        time_filter = (time >= start_time) & (time <= end_time)
-
-        # Apply the time filter to both time and concentration data
-        time_filtered = time[time_filter]
-        Conc_filtered = Conc[time_filter]
-
-        # Plot the filtered data
-        ax[i].plot(time_filtered, Conc_filtered, lw=1)
-
-        # Set x-axis major formatter to a date format
-        ax[i].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-
-        # Set the locator for the x-axis
-        ax[i].xaxis.set_major_locator(mdates.AutoDateLocator())
-
-        # Rotate and format date labels
-        plt.setp(ax[i].xaxis.get_majorticklabels())
-
-        # Set tick parameters and title
-        ax[i].tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
-        ax[i].set_title(dict_key, fontsize=9)
-        ax[i].set_ylabel(ylabel[i], fontsize = 8)
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
-    
 
+def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
+    for i, st in enumerate(start_time):
+        plot_LCS_single(ax[i], data_dict, 'LCS0076', st, end_time[i], 'SPS30_PM2.5', 'PM$_{2.5}$ / $\mu$g/m$^{3}$')
+        plot_LCS_single(ax[i], data_dict, 'LCS0104', st, end_time[i], 'SPS30_PM2.5', 'PM$_{2.5}$ / $\mu$g/m$^{3}$')
+        plot_LCS_single(ax[i], data_dict, 'PM25', st, end_time[i], 'Conc', 'PM$_{2.5}$ / $\mu$g/m$^{3}$')
+        # handles, = ax[i].get_legend_handles_labels()
+        ax[i].legend(labels = ['LCS 0076', 'LCS 0104', 'Weather station'], frameon = False, fontsize = 8)
+        ax[i].set_title(titles[i])
+
+    # Add common x and y labels for the figure
+    fig.supxlabel('Time', fontsize=10)
+
+def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
+    pd.options.mode.chained_assignment = None 
+    
+    idx_array = []
+    for i, key in enumerate(dict_keys):
+        idx_ts = np.zeros(len(timestamps[i]))
+        for j, ts in enumerate(timestamps[i]):
+            for k, time in enumerate(data[key][timelabel]):
+                if ts in str(time):
+                    idx_ts[j] += k
+        idx_array.append(idx_ts)
+    
+        print(idx_ts)
+
+    mean_df = pd.DataFrame()
+    for i, key in enumerate(dict_keys):
+        mean_conc = []
+        time_start = []
+        time_end = []
+        for j, idx in enumerate(idx_array[i][::2]):
+            new_df = data[key].iloc[int(idx):int(idx_array[i][j*2+1]), :] 
+            time_start.append(data[key][timelabel][int(idx)]) 
+            time_end.append(data[key][timelabel][int(idx_array[i][j*2+1])])
+            mean = new_df[concentration].mean()
+            mean_conc.append(mean)
+        mean_df[key + ' time start'] = time_start
+        mean_df[key + ' time end'] = time_end
+        mean_df[key] = mean_conc
+
+    mean_df.to_csv(path)
+
+    return mean_df
