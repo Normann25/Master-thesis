@@ -87,7 +87,9 @@ def read_csv_BC(path, parent_path):
             with open(os.path.join(path, file)) as f:
                 df = pd.read_csv(f)
                 
-                df['Time'] = pd.to_timedelta(df['Time local (hh:mm:ss)']).astype('timedelta64[s]')  # .str.split().str[1]
+                df['Time'] = df[['Date local (yyyy/MM/dd)', 'Time local (hh:mm:ss)']].agg(' '.join, axis=1)
+
+                df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S')
 
                 new_df = pd.DataFrame()
                 columns = ['Time', 'Sample temp (C)', 'Sample RH (%)', 'UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
@@ -204,9 +206,15 @@ def discmini_multi_timeseries(ax, data, dict_keys, n, titles):
 def ma200_single_timeseries(ax, df):
     ax.plot(df['Time'], df['IR BCc'])
 
-    formatter = FuncFormatter(lambda s, x: time.strftime('%H:%M', time.gmtime(s)))
-    ax.xaxis.set_major_formatter(formatter)
-    ax.set_xticklabels(ax.get_xticklabels(), size = 8)
+    # Set the x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+    # formatter = FuncFormatter(lambda s, x: time.strftime('%H:%M', time.gmtime(s)))
+    # ax.xaxis.set_major_formatter(formatter)
+    # ax.set_xticklabels(ax.get_xticklabels(), size = 8)
 
     ax.set_xlabel('Time [HH:MM]', fontsize = 9)
     ax.set_ylabel('Concentration / $\mu$g/m$^{3}$', fontsize = 9)
