@@ -367,35 +367,29 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
     start_time = pd.to_datetime(start_time)
     end_time = pd.to_datetime(end_time)
 
-    # Extract time and concentration data for both datasets
-    time_1 = pd.to_datetime(data_dict[dict_keys[0]]['timestamp'])
-    conc_1 = np.array(data_dict[dict_keys[0]][concentration[0]])
+    new_dict = {}
+    for i, key in enumerate(dict_keys):
+        # Extract time and concentration data for both datasets
+        time = pd.to_datetime(data_dict[key]['timestamp'])
+        conc = np.array(data_dict[key][concentration[i]])
 
-    time_2 = pd.to_datetime(data_dict[dict_keys[1]]['timestamp'])
-    conc_2 = np.array(data_dict[dict_keys[1]][concentration[1]])
+        # Apply the time filter to both datasets
+        time_filter = (time >= start_time) & (time <= end_time)
+        filtered_time = time[time_filter]
+        filtered_conc = conc[time_filter]
 
-    # Apply the time filter to both datasets
-    time_filter_1 = (time_1 >= start_time) & (time_1 <= end_time)
-    time_filter_2 = (time_2 >= start_time) & (time_2 <= end_time)
+        # Create DataFrames to align both datasets by timestamp
+        df = pd.DataFrame({'timestamp': filtered_time, key: filtered_conc})
+        new_dict[key] = df
 
-    filtered_time_1 = time_1[time_filter_1]
-    filtered_conc_1 = conc_1[time_filter_1]
-
-    filtered_time_2 = time_2[time_filter_2]
-    filtered_conc_2 = conc_2[time_filter_2]
-
-    # Create DataFrames to align both datasets by timestamp
-    df_1 = pd.DataFrame({'timestamp': filtered_time_1, dict_keys[0]: filtered_conc_1})
-    df_2 = pd.DataFrame({'timestamp': filtered_time_2, dict_keys[1]: filtered_conc_2})
-
-    # Now let's reapply the merging logic and see if it works
-    merged_df = pd.merge(df_1, df_2, on='timestamp', how='inner')
+    # Merge the two dataframes
+    merged_df = pd.merge(new_dict[dict_keys[0]], new_dict[dict_keys[1]], on='timestamp', how='inner')
 
     # Plot a scatter plot of the two concentrations
     ax.scatter(merged_df[dict_keys[0]], merged_df[dict_keys[1]], s=10, c='blue', label=f'{dict_keys[0]} vs {dict_keys[1]}')
 
     x_plot = np.linspace(min(merged_df[dict_keys[0]]), max(merged_df[dict_keys[0]]), 100)
-    a, b, squares, ndof, R2 = linear_fit(merged_df[dict_keys[0]], merged_df[dict_keys[1]], 1, 1)
+    a, b, squares, ndof, R2 = linear_fit(merged_df[dict_keys[0]], merged_df[dict_keys[1]], 1, 0)
     y_fit = a*x_plot + b
 
     ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
