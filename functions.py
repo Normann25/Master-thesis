@@ -167,28 +167,6 @@ def read_LCS_weather_data(path, parent_path, time_label):
 
     return data_dict
 
-
-
-# Define paths and parameters
-parent_LCS = '../../../'
-path_LCS = 'L:/PG-Nanoteknologi/PROJEKTER/2024 Laura og Nan/pilot kbh hovedbanegaard and noerregade/rawdata/particle/LCS/'
-names_LCS = ['LCS0076', 'LCS0104']
-
-# Read the LCS data
-data = read_LCS_data(path_LCS, parent_LCS, 'timestamp')
-
-# Debug: Print available keys in the data
-print("Available keys in data:", data.keys())
-
-# Display the data for 'LCS0076' if it exists
-if 'LCS0076' in data:
-    display(data['LCS0076'])
-else:
-    print("LCS0076 data is not available.")
-
-
-
-
 def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
         df = data_dict[dict_key]
