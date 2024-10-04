@@ -7,6 +7,7 @@ import sys
 from matplotlib.ticker import FuncFormatter
 import time
 from datetime import datetime, timedelta
+from iminuit import Minuit
 import matplotlib.dates as mdates
 #%%
 def read_txt(path, parent_path, file_names, separation):
@@ -40,13 +41,13 @@ def read_txt_acsm(path, parent_path, file_names, separation):
     
     return new_dict
 
-def format_timestamps(timestamps, old_format, new_format="%d/%m/%Y %H:%M:%S.%f"):
+def format_timestamps(timestamps, old_format, new_format):
     new_timestamps = []
     for timestamp in timestamps:
-        old_datetime = datetime.strptime(timestamp, old_format)
+        old_datetime = datetime.strptime(str(timestamp), old_format)
         new_datetime = old_datetime.strftime(new_format)
         new_timestamps.append(new_datetime)
-    return pd.to_datetime(new_timestamps, format="%d/%m/%Y %H:%M:%S.%f")
+    return pd.to_datetime(new_timestamps, format = new_format)
 
 def read_data(path, parent_path, time_label):
     parentPath = os.path.abspath(parent_path)
@@ -71,7 +72,7 @@ def read_data(path, parent_path, time_label):
     
     return data_dict
 
-def format_timestamps(timestamp_series):
+def format_timestamps_v2(timestamp_series):
     """Convert a timestamp series to datetime format, detecting format automatically."""
     return pd.to_datetime(timestamp_series, errors='coerce', dayfirst=True)
 
@@ -103,7 +104,7 @@ def read_LCS_data(path, parent_path, time_label):
                     #     continue  # Skip to the next file
                     
         # Process the timestamp column
-        df[time_label] = format_timestamps(df[time_label])
+        df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
         
         # Drop NA values
         # df = df.dropna()
@@ -304,3 +305,110 @@ def get_mean_conc(data, dict_keys, timelabel, date, timestamps, concentration, p
     mean_df.to_csv(path)
 
     return mean_df
+
+def linear_fit(x, y, a_guess, b_guess):
+
+    Npoints = len(y)
+
+    def fit_func(x, a, b):
+        return b + (a * x)
+
+    def least_squares(a, b) :
+        y_fit = fit_func(x, a, b)
+        squares = np.sum((y - y_fit)**2)
+        return squares
+    least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
+
+    # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
+    minuit = Minuit(least_squares, a = a_guess, b = b_guess)
+
+    # Perform the actual fit:
+    minuit.migrad();
+
+    # Extract the fitting parameters:
+    a_fit = minuit.values['a']
+    b_fit = minuit.values['b']
+
+    Nvar = 2                     # Number of variables 
+    Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
+
+    # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
+    squares_fit = minuit.fval                          # The chi2 value
+
+    # Calculate R2
+    def simple_model(b):
+        return b
+
+    def least_squares_simple(b) :
+        y_fit = simple_model(b)
+        squares = np.sum((y - y_fit)**2)
+        return squares
+    least_squares_simple.errordef = 1.0    # Chi2 definition (for Minuit)
+
+    # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
+    minuit_simple = Minuit(least_squares_simple, b = b_guess)
+
+    # Perform the actual fit:
+    minuit_simple.migrad();
+
+    # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
+    squares_simple = minuit_simple.fval                          # The chi2 value
+
+    R2 = 1 - (squares_fit / squares_simple)
+
+    # Print the fitted parameters
+    print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R2={R2:6.6f}")
+    
+    return a_fit, b_fit, squares_fit, Ndof_fit, R2
+
+def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels):
+
+    # Convert start_time and end_time to datetime objects if they are strings
+    start_time = pd.to_datetime(start_time)
+    end_time = pd.to_datetime(end_time)
+
+    # Extract time and concentration data for both datasets
+    time_1 = pd.to_datetime(data_dict[dict_keys[0]]['timestamp'])
+    conc_1 = np.array(data_dict[dict_keys[0]][concentration[0]])
+
+    time_2 = pd.to_datetime(data_dict[dict_keys[1]]['timestamp'])
+    conc_2 = np.array(data_dict[dict_keys[1]][concentration[1]])
+
+    # Apply the time filter to both datasets
+    time_filter_1 = (time_1 >= start_time) & (time_1 <= end_time)
+    time_filter_2 = (time_2 >= start_time) & (time_2 <= end_time)
+
+    filtered_time_1 = time_1[time_filter_1]
+    filtered_conc_1 = conc_1[time_filter_1]
+
+    filtered_time_2 = time_2[time_filter_2]
+    filtered_conc_2 = conc_2[time_filter_2]
+
+    # Create DataFrames to align both datasets by timestamp
+    df_1 = pd.DataFrame({'timestamp': filtered_time_1, dict_keys[0]: filtered_conc_1})
+    df_2 = pd.DataFrame({'timestamp': filtered_time_2, dict_keys[1]: filtered_conc_2})
+
+    # Now let's reapply the merging logic and see if it works
+    merged_df = pd.merge(
+    data['PM25'][['timestamp', 'Conc']],
+    data['LCS0076'][['timestamp', 'SPS30_PM2.5']],
+    on='timestamp', 
+    how='inner'
+    )
+
+    # Plot a scatter plot of the two concentrations
+    ax.scatter(merged_df[concentration[0]], merged_df[concentration[1]], s=10, c='blue', label=f'{dict_keys[0]} vs {dict_keys[1]}')
+
+    x_plot = np.linspace(min(merged_df[concentration[0]]), max(merged_df[concentration[0]]), 100)
+    a, b, squares, ndof, R2 = linear_fit(merged_df[concentration[0]], merged_df[concentration[1]], 1, 1)
+    y_fit = a*x_plot + b
+
+    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
+
+    # Set labels and title for the scatter plot
+    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
+    ax.set_xlabel(axis_labels[0], fontsize=8)
+    ax.set_ylabel(axis_labels[1], fontsize=8)
+
+    ax.legend(frameon = False, fontsize = 8)
