@@ -389,18 +389,13 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
     df_2 = pd.DataFrame({'timestamp': filtered_time_2, dict_keys[1]: filtered_conc_2})
 
     # Now let's reapply the merging logic and see if it works
-    merged_df = pd.merge(
-    data['PM25'][['timestamp', 'Conc']],
-    data['LCS0076'][['timestamp', 'SPS30_PM2.5']],
-    on='timestamp', 
-    how='inner'
-    )
+    merged_df = pd.merge(df_1, df_2, on='timestamp', how='inner')
 
     # Plot a scatter plot of the two concentrations
-    ax.scatter(merged_df[concentration[0]], merged_df[concentration[1]], s=10, c='blue', label=f'{dict_keys[0]} vs {dict_keys[1]}')
+    ax.scatter(merged_df[dict_keys[0]], merged_df[dict_keys[1]], s=10, c='blue', label=f'{dict_keys[0]} vs {dict_keys[1]}')
 
-    x_plot = np.linspace(min(merged_df[concentration[0]]), max(merged_df[concentration[0]]), 100)
-    a, b, squares, ndof, R2 = linear_fit(merged_df[concentration[0]], merged_df[concentration[1]], 1, 1)
+    x_plot = np.linspace(min(merged_df[dict_keys[0]]), max(merged_df[dict_keys[0]]), 100)
+    a, b, squares, ndof, R2 = linear_fit(merged_df[dict_keys[0]], merged_df[dict_keys[1]], 1, 1)
     y_fit = a*x_plot + b
 
     ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
