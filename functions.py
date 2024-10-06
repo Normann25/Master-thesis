@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 import matplotlib.dates as mdates
 import linecache
+from iminuit import Minuit
 #%%
 def read_txt(path, parent_path, file_names, separation, skip):
     new_dict = {}
@@ -34,19 +35,19 @@ def read_txt_acsm(path, parent_path, file_names, separation):
     for key in data_dict.keys():
         df = data_dict[key]
         df.columns = ['Time', 'org_conc']
-        df['Time'] = format_timestamps(df['Time'], "%Y/%m/%d %H:%M:%S")
+        df['Time'] = format_timestamps(df['Time'], "%Y/%m/%d %H:%M:%S", "%d/%m/%Y %H:%M:%S.%f")
         df['Time'] = df['Time'] + pd.Timedelta(hours=2)
         new_dict[key] = df
     
     return new_dict
 
-def format_timestamps(timestamps, old_format, new_format="%d/%m/%Y %H:%M:%S.%f"):
+def format_timestamps(timestamps, old_format, new_format):
     new_timestamps = []
     for timestamp in timestamps:
         old_datetime = datetime.strptime(timestamp, old_format)
         new_datetime = old_datetime.strftime(new_format)
         new_timestamps.append(new_datetime)
-    return pd.to_datetime(new_timestamps, format="%d/%m/%Y %H:%M:%S.%f")
+    return pd.to_datetime(new_timestamps, format=new_format)
 
 def read_data(path, parent_path, time_label):
     parentPath = os.path.abspath(parent_path)
@@ -60,7 +61,7 @@ def read_data(path, parent_path, time_label):
         name = file.split('.')[0]
         with open(os.path.join(path, file)) as f:
             df = pd.read_csv(f, sep = ';', decimal=',')
-            df[time_label] = format_timestamps(df[time_label], "%m/%d/%Y %H:%M:%S.%f")
+            df[time_label] = format_timestamps(df[time_label], "%m/%d/%Y %H:%M:%S.%f", "%d/%m/%Y %H:%M:%S.%f")
             df = df.dropna()
 
             df['PAH total'] = pd.to_numeric(df['PAH total'], errors = 'coerce')
@@ -89,7 +90,7 @@ def read_csv_BC(path, parent_path):
                 
                 df['Time'] = df[['Date local (yyyy/MM/dd)', 'Time local (hh:mm:ss)']].agg(' '.join, axis=1)
 
-                df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S')
+                df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")
 
                 new_df = pd.DataFrame()
                 columns = ['Time', 'Sample temp (C)', 'Sample RH (%)', 'UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
@@ -258,3 +259,64 @@ def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
     mean_df.to_csv(path)
 
     return mean_df
+
+def linear_fit(x, y, a_guess, b_guess):
+
+    Npoints = len(y)
+
+    def fit_func(x, a, b):
+        return b + (a * x)
+
+    def least_squares(a, b) :
+        y_fit = fit_func(x, a, b)
+        squares = np.sum((y - y_fit)**2)
+        return squares
+    least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
+
+    # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
+    minuit = Minuit(least_squares, a = a_guess, b = b_guess)
+
+    # Perform the actual fit:
+    minuit.migrad();
+
+    # Extract the fitting parameters:
+    a_fit = minuit.values['a']
+    b_fit = minuit.values['b']
+
+    Nvar = 2                     # Number of variables 
+    Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
+
+    # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
+    squares_fit = minuit.fval                          # The chi2 value
+
+    # Calculate R2
+    def simple_model(b):
+        return b
+
+    def least_squares_simple(b) :
+        y_fit = simple_model(b)
+        squares = np.sum((y - y_fit)**2)
+        return squares
+    least_squares_simple.errordef = 1.0    # Chi2 definition (for Minuit)
+
+    # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
+    minuit_simple = Minuit(least_squares_simple, b = b_guess)
+
+    # Perform the actual fit:
+    minuit_simple.migrad();
+
+    # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
+    squares_simple = minuit_simple.fval                          # The chi2 value
+    if squares_simple == 0:
+        R2 = 'R2 not available'
+
+            # Print the fitted parameters
+        print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  {R2}")
+
+    if squares_simple != 0:
+        R2 = 1 - (squares_fit / squares_simple)
+
+        # Print the fitted parameters
+        print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R2={R2:6.6f}")
+    
+    return a_fit, b_fit, squares_fit, Ndof_fit, R2
