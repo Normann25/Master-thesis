@@ -320,3 +320,39 @@ def linear_fit(x, y, a_guess, b_guess):
         print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R2={R2:6.6f}")
     
     return a_fit, b_fit, squares_fit, Ndof_fit, R2
+
+def plot_reference(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels):
+
+    new_dict = {}
+    for key in dict_keys:
+        time = pd.to_datetime(data_dict[key][timelabel]).round('10s')
+        conc = np.array(data_dict[key][concentration])
+        df = pd.DataFrame({timelabel: time, key: conc})
+        new_dict[key] = df
+
+    # Merge the two dataframes
+    merged = pd.DataFrame({timelabel: []})
+    names = []
+    for key in dict_keys:
+        merged = pd.merge(merged, new_dict[key], on = timelabel, how = 'outer')
+        names.append(key.split('_')[0])
+    merged = merged.dropna()
+
+    # Plot a scatter plot of the two concentrations
+    ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
+
+    a, b, squares, ndof, R2 = linear_fit(merged[dict_keys[0]], merged[dict_keys[1]], 1, 0)
+    y_fit = a*x_plot + b
+
+    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
+
+    ax.scatter(merged[dict_keys[0]], merged[dict_keys[1]], s=10, c='blue', label=f'{names[0]} vs {names[1]}') 
+
+    # Set labels and title for the scatter plot
+    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
+    ax.set_xlabel(axis_labels[0], fontsize=8)
+    ax.set_ylabel(axis_labels[1], fontsize=8)
+    ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
+
+    ax.legend(fontsize = 8)
