@@ -157,7 +157,7 @@ def running_mean(data, key, concentration, timelabel, interval, wndow):
     new_df = new_df.resample(interval).mean() 
     
     # Now, apply the rolling mean
-    new_df[key] = new_df[key].rolling(window=wndow, min_periods=1).mean()
+    new_df[key] = new_df[key].rolling(window = wndow, min_periods = 1).mean()
 
     return new_df
 
