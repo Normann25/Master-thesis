@@ -92,13 +92,13 @@ def ma200_multi_timeseries(ax, data, dict_keys):
         title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
         ax[i].set_title(title)
 
-def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration, ylabel):
+def plot_LCS_single(ax, data_dict, dict_key, timelabel, start_time, end_time, concentration, ylabel):
     # Convert start_time and end_time to datetime objects if they are strings
     start_time = pd.to_datetime(start_time)
     end_time = pd.to_datetime(end_time)
 
     # Extract the timestamp and concentration data
-    time = pd.to_datetime(data_dict[dict_key]['timestamp'])  # Ensure this is datetime
+    time = pd.to_datetime(data_dict[dict_key][timelabel])  # Ensure this is datetime
     Conc = np.array(data_dict[dict_key][concentration])
 
     # Create a filter for the time interval
@@ -127,7 +127,7 @@ def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration
 
 def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
-        plot_LCS_single(ax[i], data_dict, dict_key, start_time, end_time, concentration, ylabel[i])
+        plot_LCS_single(ax[i], data_dict, dict_key, 'timestamp', start_time, end_time, concentration, ylabel[i])
 
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)

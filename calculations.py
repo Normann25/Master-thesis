@@ -230,12 +230,16 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
     plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels)
 
 def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps):
-# Extract time and concentration data for both datasets
+    # Convert start_time and end_time to datetime objects if they are strings
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    # Extract time and concentration data for both datasets
     time = pd.to_datetime(ref_data[timelabel[1]]).round('60s')
     conc = np.array(ref_data[concentration[1]])
 
     # Apply the time filter to both datasets
-    time_filter = (time >= timestamps[0]) & (time <= timestamps[1])
+    time_filter = (time >= start_time) & (time <= end_time)
     filtered_time = time[time_filter]
     filtered_conc = conc[time_filter]
 
@@ -265,7 +269,7 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
                 conc = np.array(data[key][concentration[0]])
 
                 # Apply the time filter to both datasets
-                time_filter = (time >= timelabel[0]) & (time <= timelabel[1])
+                time_filter = (time >= start_time) & (time <= end_time)
                 filtered_time = time[time_filter]
                 filtered_conc = conc[time_filter]
 
