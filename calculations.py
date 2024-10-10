@@ -149,7 +149,7 @@ def linear_fit(x, y, a_guess, b_guess):
 def running_mean(data, key, concentration, timelabel, interval, wndow):
     # Set 'Time' as the index
     new_df = pd.DataFrame() 
-    new_df[timelabel] = data[key][timelabel]
+    new_df[timelabel] = pd.to_datetime(data[key][timelabel])
     new_df[key] = data[key][concentration]
     new_df = new_df.set_index(timelabel)
 
@@ -225,6 +225,53 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
     # Merge the two dataframes
     merged_df = pd.merge(new_dict[dict_keys[0]], new_dict[dict_keys[1]], on='timestamp', how='inner')
 
-    x_plot = np.linspace(min(merged_df[dict_keys[0]]), max(merged_df[dict_keys[0]]), 100)
+    x_plot = np.linspace(0, max(merged_df[dict_keys[0]]), 100)
     
     plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels)
+
+def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps):
+# Extract time and concentration data for both datasets
+    time = pd.to_datetime(ref_data[timelabel[1]]).round('60s')
+    conc = np.array(ref_data[concentration[1]])
+
+    # Apply the time filter to both datasets
+    time_filter = (time >= timestamps[0]) & (time <= timestamps[1])
+    filtered_time = time[time_filter]
+    filtered_conc = conc[time_filter]
+
+    # Create DataFrames to align both datasets by timestamp
+    ref_df = pd.DataFrame({timelabel[0]: filtered_time, 'Reference': filtered_conc})
+
+    for i, key in enumerate(data_keys):
+        if 'dm' in key:
+            new_df = running_mean(data, key, concentration[0], timelabel[0], '1T', 1) # '1T' is for 1-minute intervals
+
+            merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
+
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+
+        if 'ma200' in key:
+            time = pd.to_datetime(data[key][timelabel[0]]).round('60s')
+            conc = np.array(data[key][concentration[0]])
+            new_df = pd.DataFrame({timelabel: time, key: conc})
+
+            merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
+
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+        
+        if 'dm' not in key:
+            if 'ma200' not in key:
+                time = pd.to_datetime(data[key][timelabel[0]]).round('60s')
+                conc = np.array(data[key][concentration[0]])
+
+                # Apply the time filter to both datasets
+                time_filter = (time >= timelabel[0]) & (time <= timelabel[1])
+                filtered_time = time[time_filter]
+                filtered_conc = conc[time_filter]
+
+                # Create DataFrames to align both datasets by timestamp
+                new_df = pd.DataFrame({'timestamp': filtered_time, key: filtered_conc})
+                
+                merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
+
+                plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
