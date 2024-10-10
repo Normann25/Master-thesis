@@ -146,7 +146,43 @@ def linear_fit(x, y, a_guess, b_guess):
     
     return a_fit, b_fit, squares_fit, Ndof_fit, R2
 
-def plot_reference(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels):
+def running_mean(data, key, concentration, timelabel, interval, wndow):
+    # Set 'Time' as the index
+    new_df = pd.DataFrame() 
+    new_df[timelabel] = data[key][timelabel]
+    new_df[key] = data[key][concentration]
+    new_df = new_df.set_index(timelabel)
+
+    # Resample the data to bins 
+    new_df = new_df.resample(interval).mean() 
+    
+    # Now, apply the rolling mean
+    new_df[key] = new_df[key].rolling(window=wndow, min_periods=1).mean()
+
+    return new_df
+
+def plot_reference(ax, x_plot, data, keys, labels):
+    # Plot a scatter plot of the two concentrations
+    ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
+
+    a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
+    y_fit = a*x_plot + b
+
+    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
+
+    scatter_lbl = labels[0].split(' ')[0] + ' vs ' + labels[1].split(' ')[0]
+    ax.scatter(data[keys[0]], data[keys[1]], s=10, c='blue', label = scatter_lbl) 
+
+    # Set labels and title for the scatter plot
+    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
+    ax.set_xlabel(labels[0], fontsize=8)
+    ax.set_ylabel(labels[1], fontsize=8)
+    ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
+
+    ax.legend(fontsize = 8)
+
+def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels):
 
     new_dict = {}
     for key in dict_keys:
@@ -163,24 +199,7 @@ def plot_reference(ax, data_dict, dict_keys, concentration, timelabel, x_plot, a
         names.append(key.split('_')[0])
     merged = merged.dropna()
 
-    # Plot a scatter plot of the two concentrations
-    ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
-
-    a, b, squares, ndof, R2 = linear_fit(merged[dict_keys[0]], merged[dict_keys[1]], 1, 0)
-    y_fit = a*x_plot + b
-
-    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
-
-    ax.scatter(merged[dict_keys[0]], merged[dict_keys[1]], s=10, c='blue', label=f'{names[0]} vs {names[1]}') 
-
-    # Set labels and title for the scatter plot
-    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
-    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
-    ax.set_xlabel(axis_labels[0], fontsize=8)
-    ax.set_ylabel(axis_labels[1], fontsize=8)
-    ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
-
-    ax.legend(fontsize = 8)
+    plot_reference(ax, x_plot, merged, dict_keys, axis_labels)
 
 def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels):
 
@@ -206,19 +225,6 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
     # Merge the two dataframes
     merged_df = pd.merge(new_dict[dict_keys[0]], new_dict[dict_keys[1]], on='timestamp', how='inner')
 
-    # Plot a scatter plot of the two concentrations
-    ax.scatter(merged_df[dict_keys[0]], merged_df[dict_keys[1]], s=10, c='blue', label=f'{dict_keys[0]} vs {dict_keys[1]}')
-
     x_plot = np.linspace(min(merged_df[dict_keys[0]]), max(merged_df[dict_keys[0]]), 100)
-    a, b, squares, ndof, R2 = linear_fit(merged_df[dict_keys[0]], merged_df[dict_keys[1]], 1, 0)
-    y_fit = a*x_plot + b
-
-    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
-
-    # Set labels and title for the scatter plot
-    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
-    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
-    ax.set_xlabel(axis_labels[0], fontsize=8)
-    ax.set_ylabel(axis_labels[1], fontsize=8)
-
-    ax.legend(frameon = False, fontsize = 8)
+    
+    plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels)

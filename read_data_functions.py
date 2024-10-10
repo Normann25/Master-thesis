@@ -84,7 +84,7 @@ def read_csv_BC(path, parent_path):
         if '.csv' in file:
             name = file.split('.')[0]
             name = name.split('-')[1]
-            name = name.split('_')[0] + '_' + name.split('_')[2]
+            name = 'ma200' + '_' + name.split('_')[0] + '_' + name.split('_')[2]
             with open(os.path.join(path, file)) as f:
                 df = pd.read_csv(f)
                 
