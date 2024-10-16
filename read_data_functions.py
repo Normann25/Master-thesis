@@ -196,7 +196,14 @@ def read_SMPS(path, parent_path, hour):
             df['Time'] = format_timestamps(df['Date Time'], "%Y/%m/%d %H:%M:%S", "%d/%m/%Y %H:%M:%S")
             df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
 
-            data_dict[name] = df
+            df['Date'] = pd.to_datetime(df['Date Time']).dt.date
+            for date in df['Date'].unique():
+                mask = df['Date'] == date
+                new_df = df[mask].reset_index()
+                data_dict[str(date)] = new_df.drop('index', axis = 1)
+
+        if 'SMPS' in file:
+            pass
         
     return data_dict
 
@@ -210,24 +217,32 @@ def read_OPS(path, parent_path, separation):
     files = os.listdir(path)
 
     for file in files:
-        name = file.split('.')[0]
-        start_date = linecache.getline(os.path.join(path, file), 5)
-        start_date = start_date.split(',')[1]
-        start_time = linecache.getline(os.path.join(path, file), 4)
-        start_time = start_time.split(',')[1]
-        start_time = start_date + ' ' + start_time
-        old_time = datetime.strptime(start_time, "%Y/%m/%d %H:%M:%S")
-        new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
-        
-        with open(os.path.join(path, file), 'r') as f:
-            df = pd.read_table(f, sep = separation, skiprows = 34)
+        if 'TEST' in file:
+            name = file.split('.')[0]
+            name = name.split('_')[-1]
+            start_date = linecache.getline(os.path.join(path, file), 8)
+            start_date = start_date.split(',')[1]
+            start_date = start_date.split('\n')[0]
+            start_time = linecache.getline(os.path.join(path, file), 7)
+            start_time = start_time.split(',')[1]
+            start_time = start_time.split('\n')[0]
+            start_time = start_date + ' ' + start_time
+            old_time = datetime.strptime(start_time, "%Y/%m/%d %H:%M:%S")
+            new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
+            
+            with open(os.path.join(path, file), 'r') as f:
+                df = pd.read_table(f, sep = separation, skiprows = 37)
 
-        Timestamps = []
-        for time in df['Elapsed Time [s]']:
-            timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
-            Timestamps.append(timestamp)
-        df['Time'] = Timestamps
+            Timestamps = []
+            for time in df['Elapsed Time [s]']:
+                timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
+                Timestamps.append(timestamp)
+            df['Time'] = Timestamps
 
-        new_dict[name] = df
+            df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
+
+            df = df.drop(['Alarms', 'Errors'], axis = 1)
+
+            new_dict[name] = df
         
     return new_dict
