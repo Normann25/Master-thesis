@@ -189,22 +189,32 @@ def read_SMPS(path, parent_path, hour):
 
     for file in files:
         if 'SCAN' in file:
-            name = file.split('.')[0]
             with open(os.path.join(path, file), 'r') as f:
                 df = pd.read_table(f, sep = ',', skiprows = 8)
 
             df['Time'] = format_timestamps(df['Date Time'], "%Y/%m/%d %H:%M:%S", "%d/%m/%Y %H:%M:%S")
-            df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
+            df['Time'] = df['Time'] + pd.Timedelta(hours = hour[0])
 
             df['Date'] = pd.to_datetime(df['Date Time']).dt.date
             for date in df['Date'].unique():
                 mask = df['Date'] == date
                 new_df = df[mask].reset_index()
-                data_dict[str(date)] = new_df.drop('index', axis = 1)
+                data_dict[str(date) + '_NanoScan'] = new_df.drop('index', axis = 1)
 
         if 'SMPS' in file:
-            pass
-        
+            name = file.split('.')[0]
+            with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
+                df = pd.read_table(f, sep = ',', skiprows = 17, header = None, index_col = 0)
+            
+            df = df.T
+
+            df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
+
+            df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
+            df['Time'] = df['Time'] + pd.Timedelta(hours = hour[1])
+
+            data_dict[name] = df
+
     return data_dict
 
 def read_OPS(path, parent_path, separation):
@@ -242,6 +252,20 @@ def read_OPS(path, parent_path, separation):
             df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
 
             df = df.drop(['Alarms', 'Errors'], axis = 1)
+
+            new_dict[name] = df
+        
+        if 'APS' in file:
+            name = file.split('.')[0]
+            with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
+                df = pd.read_table(f, sep = ',', skiprows = 6, header = None, index_col = 0)
+            
+            df = df.T
+
+            df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
+
+            df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
+            # df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
 
             new_dict[name] = df
         

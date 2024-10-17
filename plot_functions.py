@@ -165,7 +165,7 @@ def OPS_single_timeseries(ax, df, colors):
 
 def NanoScan_single_timeseries(ax, df, ncol):
     
-    # ax.plot(df['Time'], df['Total Conc'], label = 'Total', zorder = 10)
+    ax.plot(df['Time'], df['Total Conc'], label = 'Total', zorder = 10)
 
     for key in df.keys()[3:16]:
         ax.plot(df['Time'], df[key], label = key + ' nm', lw = 1)
