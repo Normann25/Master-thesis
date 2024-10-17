@@ -143,3 +143,41 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
 
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
+
+def OPS_single_timeseries(ax, df, colors):
+    
+    ax.plot(df['Time'], df['Total Conc'], label = 'Total', zorder = 10, color = colors[0], lw = 1)
+
+    for i, key in enumerate(df.keys()[1:18]):
+        ax.plot(df['Time'], df[key], label = key, color = colors[i+1], lw = 1)
+
+    # Set the x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+
+    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
+    ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
+
+    ax.legend(frameon = False, fontsize = 8, ncol = 2)
+
+def NanoScan_single_timeseries(ax, df, ncol):
+    
+    # ax.plot(df['Time'], df['Total Conc'], label = 'Total', zorder = 10)
+
+    for key in df.keys()[3:16]:
+        ax.plot(df['Time'], df[key], label = key + ' nm', lw = 1)
+
+    # Set the x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+
+    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
+    ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
+
+    ax.legend(frameon = False, fontsize = 8, ncol = ncol)
