@@ -279,3 +279,34 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
                 merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
                 plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+
+def bin_mean(timestamps, df, df_keys, timelabel):
+    mean = []
+    std = []
+
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    time = pd.to_datetime(df[timelabel])
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    for key in df_keys:
+        conc = np.array(df[key])
+        filtered_conc = conc[time_filter]
+        bin_mean = filtered_conc.mean()
+        bin_std = filtered_conc.std()
+        mean.append(bin_mean)
+        std.append(bin_std)
+    
+    return mean, std
+
+def plot_bin_mean(ax, timestamps, df, df_keys, timelabel, bins, axis_labels):
+    mean, std = bin_mean(timestamps, df, df_keys, timelabel)
+
+    ax.errorbar(bins, mean, std, fmt='.', ecolor='k', elinewidth=1, capsize=2, capthick=1)
+
+    ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
+
+    # Set labels and title for the scatter plot
+    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
