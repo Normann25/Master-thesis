@@ -202,18 +202,24 @@ def read_SMPS(path, parent_path, hour):
                 data_dict[str(date) + '_NanoScan'] = new_df.drop('index', axis = 1)
 
         if 'SMPS' in file:
+            separations = [',', '\t']
             name = file.split('.')[0]
-            with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
-                df = pd.read_table(f, sep = ',', skiprows = 17, header = None, index_col = 0)
-            
-            df = df.T
+            for separation in separations:
+                try:
+                    with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
+                        df = pd.read_table(f, sep = separation, skiprows = 17, header = None, index_col = 0)
+                    
+                    df = df.T
 
-            df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
+                    df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
 
-            df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
-            df['Time'] = df['Time'] + pd.Timedelta(hours = hour[1])
+                    df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
+                    df['Time'] = df['Time'] + pd.Timedelta(hours = hour[1])
 
-            data_dict[name] = df
+                    data_dict[name] = df
+
+                except KeyError:
+                    print(f'Failed to read file with separation: {separation}')
 
     return data_dict
 
@@ -256,17 +262,23 @@ def read_OPS(path, parent_path, separation):
             new_dict[name] = df
         
         if 'APS' in file:
+            separations = [',', '\t']
             name = file.split('.')[0]
-            with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
-                df = pd.read_table(f, sep = ',', skiprows = 6, header = None, index_col = 0)
-            
-            df = df.T
+            for separation in separations:
+                try:
+                    with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
+                        df = pd.read_table(f, sep = separation, skiprows = 17, header = None, index_col = 0)
+                    
+                    df = df.T
 
-            df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
+                    df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
 
-            df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
-            # df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
+                    df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
+                    # df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
 
-            new_dict[name] = df
+                    new_dict[name] = df
+
+                except KeyError:
+                    print(f'Failed to read file with separation: {separation}')
         
     return new_dict
