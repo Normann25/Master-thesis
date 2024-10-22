@@ -223,7 +223,7 @@ def read_SMPS(path, parent_path, hour):
 
     return data_dict
 
-def read_OPS(path, parent_path, separation):
+def read_OPS(path, parent_path):
     new_dict = {}
 
     ParentPath = os.path.abspath(parent_path)
@@ -233,7 +233,7 @@ def read_OPS(path, parent_path, separation):
     files = os.listdir(path)
 
     for file in files:
-        if 'TEST' in file:
+        if 'OPS' in file:
             name = file.split('.')[0]
             name = name.split('_')[-1]
             start_date = linecache.getline(os.path.join(path, file), 8)
@@ -247,8 +247,8 @@ def read_OPS(path, parent_path, separation):
             new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
             
             with open(os.path.join(path, file), 'r') as f:
-                df = pd.read_table(f, sep = separation, skiprows = 37)
-
+                df = pd.read_table(f, sep = ',', skiprows = 37)
+    
             Timestamps = []
             for time in df['Elapsed Time [s]']:
                 timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
@@ -267,8 +267,8 @@ def read_OPS(path, parent_path, separation):
             for separation in separations:
                 try:
                     with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
-                        df = pd.read_table(f, sep = separation, skiprows = 17, header = None, index_col = 0)
-                    
+                        df = pd.read_table(f, sep = separation, skiprows = 6, header = None, index_col = 0)
+
                     df = df.T
 
                     df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
