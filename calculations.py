@@ -303,32 +303,6 @@ def bin_mean(timestamps, df, df_keys, timelabel):
     
     return mean, std
 
-# def bin_mean(timestamps, df, df_keys, timelabel):
-#     mean = []
-#     std = []
-    
-#     for key in df_keys:
-#         conc = np.array(df[key].dropna())
-        
-#         # Convert the concentration data to numeric, coercing errors
-#         conc = pd.to_numeric(conc, errors='coerce')
-        
-#         # Apply the time filter (if defined in your context)
-#         time_filter = (timestamps == df[timelabel])  # Ensure this is defined correctly for your use case
-#         filtered_conc = conc[time_filter]
-        
-#         # Remove NaNs that resulted from coercing non-numeric values
-#         filtered_conc = filtered_conc[~np.isnan(filtered_conc)]
-        
-#         # Calculate the mean and std
-#         bin_mean = filtered_conc.mean()
-#         bin_std = filtered_conc.std()
-        
-#         mean.append(bin_mean)
-#         std.append(bin_std)
-
-#     return mean, std
-
 def plot_bin_mean(ax, timestamps, df, df_keys, timelabel, bins, axis_labels):
     mean, std = bin_mean(timestamps, df, df_keys, timelabel)
 

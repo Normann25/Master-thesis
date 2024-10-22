@@ -144,24 +144,61 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
 
-def OPS_single_timeseries(ax, df, colors):
-    
-    ax.plot(df['Time'], df['Total Conc'], label = 'Total', zorder = 10, color = colors[0], lw = 1)
+def OPS_single_timeseries(axes, df, colors, timestamps):
 
-    for i, key in enumerate(df.keys()[1:18]):
-        ax.plot(df['Time'], df[key], label = key, color = colors[i+1], lw = 1)
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
 
-    # Set the x-axis major formatter to a date format
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+    time = pd.to_datetime(df['Time'])
+    conc = np.array(df['Total Conc'])
+    conc = pd.to_numeric(conc, errors='coerce')
 
-    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-    ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
+    time_filter = (time >= start_time) & (time <= end_time)
 
-    ax.legend(frameon = False, fontsize = 8, ncol = 2)
+    filtered_time = time[time_filter]
+    filtered_conc = conc[time_filter]
+
+    new_df = pd.DataFrame({'Time': filtered_time, 'Total Conc': filtered_conc})
+
+    for key in df.keys()[1:18]:
+        conc = np.array(df[key])
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+
+        new_df[key] = filtered_conc
+        # ax.plot(df['Time'], df[key], label = key, color = colors[i+1], lw = 1)
+
+    # Bin plot
+    axes[0].plot(new_df['Time'], new_df['Total Conc'], label = 'Total', zorder = 10, color = colors[0], lw = 1)
+    axes[0].plot(new_df['Time'], new_df.iloc[:,2:5].sum(axis = 1), color = colors[1], label = '0.300 - 0.465 $\mu$m')
+    axes[0].plot(new_df['Time'], new_df.iloc[:,5:8].sum(axis = 1), color = colors[2], label = '0.465 - 0.897 $\mu$m')
+    axes[0].plot(new_df['Time'], new_df.iloc[:,8:11].sum(axis = 1), color = colors[3], label = '0.897 - 1.732 $\mu$m')
+    axes[0].plot(new_df['Time'], new_df.iloc[:,11:13].sum(axis = 1), color = colors[4], label = '1.732 - 2.685 $\mu$m')
+    axes[0].plot(new_df['Time'], new_df.iloc[:,13:15].sum(axis = 1), color = colors[5], label = '2.685 - 4.162 $\mu$m')
+    axes[0].plot(new_df['Time'], new_df.iloc[:,15:].sum(axis = 1), color = colors[6], label = '4.162 - 10.000 $\mu$m')
+
+    # PN plot
+    axes[1].plot(new_df['Time'], new_df.iloc[:,2:8].sum(axis = 1), color = colors[1], label = 'PN$_{1}$', zorder = 10)
+    axes[1].plot(new_df['Time'], new_df.iloc[:,2:12].sum(axis = 1), color = colors[2], label = 'PN$_{2.5}$', zorder = 5)
+    axes[1].plot(new_df['Time'], new_df.iloc[:,2:14].sum(axis = 1), color = colors[3], label = 'PN$_{4}$')
+    axes[1].plot(new_df['Time'], new_df.iloc[:,2:].sum(axis = 1), color = colors[4], label = 'PN$_{10}$', zorder = -10)
+
+    for ax in axes:
+        # Set the x-axis major formatter to a date format
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        # Rotate and format date labels
+        plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+        plt.setp(ax.yaxis.get_majorticklabels(), size = 8)
+
+        ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (4,4))
+
+        ax.set_xlabel('Time [HH:MM]', fontsize = 9)
+        ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
+
+        ax.legend(frameon = False, fontsize = 8, ncol = 1)
+
 
 def NanoScan_single_timeseries(ax, df, ncol):
     
