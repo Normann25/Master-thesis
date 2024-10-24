@@ -283,6 +283,7 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 def bin_mean(timestamps, df, df_keys, timelabel):
     mean = []
     std = []
+    error = []
 
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -298,15 +299,17 @@ def bin_mean(timestamps, df, df_keys, timelabel):
         filtered_conc = conc[time_filter]
         bin_mean = filtered_conc.mean()
         bin_std = filtered_conc.std()
+        error_mean = bin_std / np.sqrt(len(filtered_conc))
         mean.append(bin_mean)
         std.append(bin_std)
+        error.append(error_mean)
     
-    return mean, std
+    return mean, std, error
 
 def plot_bin_mean(ax, timestamps, df, df_keys, timelabel, bins, axis_labels):
-    mean, std = bin_mean(timestamps, df, df_keys, timelabel)
+    mean, std, error = bin_mean(timestamps, df, df_keys, timelabel)
 
-    ax.errorbar(bins, mean, std, fmt='.', ecolor='k', elinewidth=1, capsize=2, capthick=1)
+    ax.errorbar(bins, mean, error, fmt='.', ecolor='k', elinewidth=1, capsize=2, capthick=1)
 
     ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
 
