@@ -91,7 +91,7 @@ def compute_f(f, x, *par):
         return np.array([f(xi, *par) for xi in x])
 
 
-class Chi2Regression:  # override the class with a better one
+class Chi2Regression:  
         
     def __init__(self, f, x, y, sy=None, weights=None, bound=None):
         
@@ -104,7 +104,7 @@ class Chi2Regression:  # override the class with a better one
             y  = y[mask]
             sy = sy[mask]
 
-        self.f = f  # model predicts y for given x
+        self.f = f  
         self.x = np.array(x)
         self.y = np.array(y)
         
@@ -112,12 +112,12 @@ class Chi2Regression:  # override the class with a better one
         self.weights = set_var_if_None(weights, self.x)
         self.func_code = make_func_code(describe(self.f)[1:])
 
-    def __call__(self, *par):  # par are a variable number of model parameters
+    def __call__(self, *par):  
         
-        # compute the function value
+        
         f = compute_f(self.f, self.x, *par)
         
-        # compute the chi2-value
+        
         chi2 = np.sum(self.weights*(self.y - f)**2/self.sy**2)
         
         return chi2
@@ -143,7 +143,7 @@ def integrate1d(f, bound, nint, *arg):
 
 
 
-class UnbinnedLH:  # override the class with a better one
+class UnbinnedLH:  
     
     def __init__(self, f, data, weights=None, bound=None, badvalue=-100000, extended=False, extended_bound=None, extended_nint=100):
         
@@ -154,7 +154,7 @@ class UnbinnedLH:  # override the class with a better one
             if (weights is not None) :
                 weights = weights[mask]
 
-        self.f = f  # model predicts PDF for given x
+        self.f = f  
         self.data = np.array(data)
         self.weights = set_var_if_None(weights, self.data)
         self.bad_value = badvalue
@@ -168,23 +168,23 @@ class UnbinnedLH:  # override the class with a better one
         
         self.func_code = make_func_code(describe(self.f)[1:])
 
-    def __call__(self, *par):  # par are a variable number of model parameters
+    def __call__(self, *par):  
         
         logf = np.zeros_like(self.data)
         
-        # compute the function value
+        
         f = compute_f(self.f, self.data, *par)
     
-        # find where the PDF is 0 or negative (unphysical)        
+                
         mask_f_positive = (f>0)
 
-        # calculate the log of f everyhere where f is positive
+        
         logf[mask_f_positive] = np.log(f[mask_f_positive]) * self.weights[mask_f_positive] 
         
-        # set everywhere else to badvalue
+        
         logf[~mask_f_positive] = self.bad_value
         
-        # compute the sum of the log values: the LLH
+        
         llh = -np.sum(logf)
         
         if self.extended:
@@ -200,7 +200,7 @@ class UnbinnedLH:  # override the class with a better one
 
 
 
-class BinnedLH:  # override the class with a better one
+class BinnedLH:  
     
     def __init__(self, f, data, bins=40, weights=None, weighterrors=None, bound=None, badvalue=1000000, extended=False, use_w2=False, nint_subdiv=1):
         
@@ -248,9 +248,9 @@ class BinnedLH:  # override the class with a better one
         self.ndof = np.sum(self.h > 0) - (self.func_code.co_argcount - 1)
         
 
-    def __call__(self, *par):  # par are a variable number of model parameters
+    def __call__(self, *par):  
 
-        # ret = compute_bin_lh_f(self.f, self.edges, self.h, self.w2, self.extended, self.use_w2, self.badvalue, *par)
+        
         ret = compute_bin_lh_f2(self.f, self.edges, self.h, self.w2, self.extended, self.use_w2, self.nint_subdiv, *par)
         
         return ret
@@ -267,7 +267,7 @@ import warnings
 
 def xlogyx(x, y):
     
-    #compute x*log(y/x) to a good precision especially when y~x
+    
     
     if x<1e-100:
         warnings.warn('x is really small return 0')
@@ -279,7 +279,7 @@ def xlogyx(x, y):
         return -x*np.log1p( (x-y) / y )
 
 
-#compute w*log(y/x) where w < x and goes to zero faster than x
+
 def wlogyx(w, y, x):
     if x<1e-100:
         warnings.warn('x is really small return 0')
