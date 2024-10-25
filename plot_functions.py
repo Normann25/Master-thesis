@@ -144,7 +144,7 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
 
-def OPS_single_timeseries(axes, df, colors, timestamps):
+def OPS_single_timeseries(ax, df, colors, timestamps):
 
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -169,35 +169,28 @@ def OPS_single_timeseries(axes, df, colors, timestamps):
         # ax.plot(df['Time'], df[key], label = key, color = colors[i+1], lw = 1)
 
     # Bin plot
-    axes[0].plot(new_df['Time'], new_df['Total Conc'], label = 'Total', zorder = 10, color = colors[0], lw = 1)
-    axes[0].plot(new_df['Time'], new_df.iloc[:,2:5].sum(axis = 1), color = colors[1], label = '0.300 - 0.465 $\mu$m')
-    axes[0].plot(new_df['Time'], new_df.iloc[:,5:8].sum(axis = 1), color = colors[2], label = '0.465 - 0.897 $\mu$m')
-    axes[0].plot(new_df['Time'], new_df.iloc[:,8:11].sum(axis = 1), color = colors[3], label = '0.897 - 1.732 $\mu$m')
-    axes[0].plot(new_df['Time'], new_df.iloc[:,11:13].sum(axis = 1), color = colors[4], label = '1.732 - 2.685 $\mu$m')
-    axes[0].plot(new_df['Time'], new_df.iloc[:,13:15].sum(axis = 1), color = colors[5], label = '2.685 - 4.162 $\mu$m')
-    axes[0].plot(new_df['Time'], new_df.iloc[:,15:].sum(axis = 1), color = colors[6], label = '4.162 - 10.000 $\mu$m')
+    ax.plot(new_df['Time'], new_df['Total Conc'], label = 'Total', zorder = 10, color = colors[0], lw = 1)
+    ax.plot(new_df['Time'], new_df.iloc[:,2:5].sum(axis = 1), color = colors[1], label = '0.300 - 0.465 $\mu$m')
+    ax.plot(new_df['Time'], new_df.iloc[:,5:8].sum(axis = 1), color = colors[2], label = '0.465 - 0.897 $\mu$m')
+    ax.plot(new_df['Time'], new_df.iloc[:,8:11].sum(axis = 1), color = colors[3], label = '0.897 - 1.732 $\mu$m')
+    ax.plot(new_df['Time'], new_df.iloc[:,11:13].sum(axis = 1), color = colors[4], label = '1.732 - 2.685 $\mu$m')
+    ax.plot(new_df['Time'], new_df.iloc[:,13:15].sum(axis = 1), color = colors[5], label = '2.685 - 4.162 $\mu$m')
+    ax.plot(new_df['Time'], new_df.iloc[:,15:].sum(axis = 1), color = colors[6], label = '4.162 - 10.000 $\mu$m')
 
-    # PN plot
-    axes[1].plot(new_df['Time'], new_df.iloc[:,2:8].sum(axis = 1), color = colors[1], label = 'PN$_{1}$', zorder = 10)
-    axes[1].plot(new_df['Time'], new_df.iloc[:,2:12].sum(axis = 1), color = colors[2], label = 'PN$_{2.5}$', zorder = 5)
-    axes[1].plot(new_df['Time'], new_df.iloc[:,2:14].sum(axis = 1), color = colors[3], label = 'PN$_{4}$')
-    axes[1].plot(new_df['Time'], new_df.iloc[:,2:].sum(axis = 1), color = colors[4], label = 'PN$_{10}$', zorder = -10)
+    # Set the x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+    plt.setp(ax.yaxis.get_majorticklabels(), size = 8)
 
-    for ax in axes:
-        # Set the x-axis major formatter to a date format
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-        # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-        # Rotate and format date labels
-        plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
-        plt.setp(ax.yaxis.get_majorticklabels(), size = 8)
+    ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (4,4))
 
-        ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (4,4))
+    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
+    ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
 
-        ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-        ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
-
-        ax.legend(frameon = False, fontsize = 8, ncol = 1)
+    ax.legend(frameon = False, fontsize = 8, ncol = 1)
 
 
 def NanoScan_single_timeseries(ax, df, ncol):
@@ -218,3 +211,66 @@ def NanoScan_single_timeseries(ax, df, ncol):
     ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
 
     ax.legend(frameon = False, fontsize = 8, ncol = ncol)
+
+def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
+
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    time = pd.to_datetime(df['Time'])
+
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    filtered_time = np.array(time[time_filter])
+
+    new_df = pd.DataFrame({'Time': filtered_time})
+
+    for key in df_keys:
+        conc = np.array(df[key])
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+
+        new_df[key] = filtered_conc
+
+    data = np.array(new_df[new_df.keys()[1:]])
+
+    # Set the upper and/or lower limit of the color scale based on input
+    y_min = np.nanmin(data)
+    y_max = np.nanmax(data)
+
+    # Generate an extra time bin, which is needed for the meshgrid
+    dt = filtered_time[1]-filtered_time[0]
+    new_time = filtered_time - dt
+    new_time = np.append(new_time, new_time[-1]+dt)
+
+    # generate 2d meshgrid for the x, y, and z data of the 3D color plot
+    y, x = np.meshgrid(bin_edges, new_time)
+    # try:
+    # Fill the generated mesh with particle concentration data
+    p = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
+    
+    # except TypeError:
+    #     data = data[:171, :12]  # Adjust data dimensions to (171, 12)
+
+    #     # Fill the generated mesh with particle concentration data
+    #     p = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.set_xlabel("Time, HH:MM")
+    plt.subplots_adjust(hspace=0.05)
+        
+    # Make the y-scal logarithmic and set a label
+    ax.set_yscale("log")
+    ax.set_ylabel("Dp, nm")
+    
+    # Insert coloarbar and label it
+    col = fig.colorbar(p, ax=ax)
+    if datatype == "number":
+        col.set_label('dN, cm$^{-3}$')
+    elif datatype == "mass":
+        col.set_label('dm, $\mu$g/m$^{3}$')
+    elif datatype == "normed":
+        col.set_label('dN/dlogDp, cm$^{-3}$')
+    
+    # Set ticks on the plot to be longer
+    ax.tick_params(axis="y",which="both",direction='out')
