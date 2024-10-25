@@ -223,7 +223,7 @@ def read_SMPS(path, parent_path, hour):
 
     return data_dict
 
-def read_OPS(path, parent_path):
+def read_OPS(path, parent_path): # , V_chamber):
     new_dict = {}
 
     ParentPath = os.path.abspath(parent_path)
@@ -245,6 +245,9 @@ def read_OPS(path, parent_path):
             start_time = start_date + ' ' + start_time
             old_time = datetime.strptime(start_time, "%Y/%m/%d %H:%M:%S")
             new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
+
+            DCT = linecache.getline(os.path.join(path, file), 34)
+            DCT = float(DCT.split(',')[1])
             
             with open(os.path.join(path, file), 'r') as f:
                 df = pd.read_table(f, sep = ',', skiprows = 37)
@@ -256,6 +259,12 @@ def read_OPS(path, parent_path):
             df['Time'] = Timestamps
 
             df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
+
+            for key in df.keys()[1:18]:
+                N_i, ts, td = np.array(df[key]), np.array(df['Elapsed Time [s]']), np.array(df['Deadtime (s)'])
+
+                C_i = N_i / (16.67 * (ts - DCT * td))
+                df[key] = C_i # / V_chamber
 
             df = df.drop(['Alarms', 'Errors'], axis = 1)
 

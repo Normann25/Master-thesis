@@ -245,15 +245,9 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
 
     # generate 2d meshgrid for the x, y, and z data of the 3D color plot
     y, x = np.meshgrid(bin_edges, new_time)
-    # try:
+
     # Fill the generated mesh with particle concentration data
     p = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
-    
-    # except TypeError:
-    #     data = data[:171, :12]  # Adjust data dimensions to (171, 12)
-
-    #     # Fill the generated mesh with particle concentration data
-    #     p = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.set_xlabel("Time, HH:MM")
