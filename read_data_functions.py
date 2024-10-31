@@ -233,42 +233,43 @@ def read_OPS(path, parent_path): # , V_chamber):
     files = os.listdir(path)
 
     for file in files:
-        if 'OPS' in file:
-            name = file.split('.')[0]
-            name = name.split('_')[-1]
-            start_date = linecache.getline(os.path.join(path, file), 8)
-            start_date = start_date.split(',')[1]
-            start_date = start_date.split('\n')[0]
-            start_time = linecache.getline(os.path.join(path, file), 7)
-            start_time = start_time.split(',')[1]
-            start_time = start_time.split('\n')[0]
-            start_time = start_date + ' ' + start_time
-            old_time = datetime.strptime(start_time, "%Y/%m/%d %H:%M:%S")
-            new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
+        if '.csv' in file:
+            if 'OPS' in file:
+                name = file.split('.')[0]
+                name = name.split('_')[-1]
+                start_date = linecache.getline(os.path.join(path, file), 8)
+                start_date = start_date.split(',')[1]
+                start_date = start_date.split('\n')[0]
+                start_time = linecache.getline(os.path.join(path, file), 7)
+                start_time = start_time.split(',')[1]
+                start_time = start_time.split('\n')[0]
+                start_time = start_date + ' ' + start_time
+                old_time = datetime.strptime(start_time, "%Y/%m/%d %H:%M:%S")
+                new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
 
-            DCT = linecache.getline(os.path.join(path, file), 34)
-            DCT = float(DCT.split(',')[1])
-            
-            with open(os.path.join(path, file), 'r') as f:
-                df = pd.read_table(f, sep = ',', skiprows = 37)
-    
-            Timestamps = []
-            for time in df['Elapsed Time [s]']:
-                timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
-                Timestamps.append(timestamp)
-            df['Time'] = Timestamps
+                DCT = linecache.getline(os.path.join(path, file), 34)
+                DCT = float(DCT.split(',')[1])
+                
+                with open(os.path.join(path, file), 'r') as f:
+                    df = pd.read_table(f, sep = ',', skiprows = 37)
+        
+                Timestamps = []
+                for time in df['Elapsed Time [s]']:
+                    timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
+                    Timestamps.append(timestamp)
+                df['Time'] = Timestamps
 
-            df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
+                df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
 
-            for key in df.keys()[1:18]:
-                N_i, ts, td = np.array(df[key]), np.array(df['Elapsed Time [s]']), np.array(df['Deadtime (s)'])
+                for key in df.keys()[1:18]:
+                    C_i, ts, td = np.array(df[key]), np.array(df['Elapsed Time [s]']), np.array(df['Deadtime (s)'])
 
-                C_i = N_i / (16.67 * (ts - DCT * td))
-                df[key] = C_i # / V_chamber
+                    N_i = C_i * (16.67 * (ts - DCT * td))
+                    df[key] = N_i # / V_chamber
 
-            df = df.drop(['Alarms', 'Errors'], axis = 1)
+                df = df.drop(['Alarms', 'Errors'], axis = 1)
 
-            new_dict[name] = df
+                new_dict[name] = df
         
         if 'APS' in file:
             separations = [',', '\t']
