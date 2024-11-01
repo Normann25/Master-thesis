@@ -280,10 +280,10 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 
                 plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
 
-def bin_mean(timestamps, df, df_keys, timelabel):
-    mean = []
-    std = []
-    error = []
+def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
+    mean = np.zeros(len(df_keys))
+    std = np.zeros(len(df_keys))
+    error = np.zeros(len(df_keys))
 
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -291,28 +291,72 @@ def bin_mean(timestamps, df, df_keys, timelabel):
     time = pd.to_datetime(df[timelabel])
     time_filter = (time >= start_time) & (time <= end_time)
 
-    for key in df_keys:
+    for i, key in enumerate(df_keys):
         conc = np.array(df[key].dropna())
         
         # Convert the concentration data to numeric, coercing errors
         conc = pd.to_numeric(conc, errors='coerce')
         filtered_conc = conc[time_filter]
-        bin_mean = filtered_conc.mean()
-        bin_std = filtered_conc.std()
-        error_mean = bin_std / np.sqrt(len(filtered_conc))
-        mean.append(bin_mean)
-        std.append(bin_std)
-        error.append(error_mean)
+        errors = filtered_conc * inst_error
+        error[i] += errors.mean()
+        mean[i] += filtered_conc.mean()
+        std[i] += filtered_conc.std()
     
     return mean, std, error
 
-def plot_bin_mean(ax, timestamps, df, df_keys, timelabel, bins, axis_labels):
-    mean, std, error = bin_mean(timestamps, df, df_keys, timelabel)
+def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass):
+    mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
 
-    ax.errorbar(bins, mean, error, fmt='.', ecolor='k', elinewidth=1, capsize=2, capthick=1)
+    min_std_number = [m - std for m, std in zip(mean_number, std_number)]
+    max_std_number = [m + std for m, std in zip(mean_number, std_number)]
 
-    ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
+    ax.fill_between(bins, min_std_number, max_std_number, alpha=0.2, color=clr[0], linewidth=0)
+    ax.errorbar(bins, mean_number, error_number, ecolor='k', elinewidth=1, capsize=2, capthick=1, color=clr[0], lw = 1)
 
-    # Set labels and title for the scatter plot
-    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
-    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
+    # Explicitly set ylabel color for primary axis
+    ax.set_ylabel(axis_labels[1], color=clr[0])
+    ax.tick_params(axis='y', labelcolor=clr[0])
+    ax.set(xlabel=axis_labels[0], xscale='log')
+
+    if mass == True:
+        mean_mass, std_mass, error_mass = bin_mean(timestamps, df_mass, df_keys, timelabel, inst_error)
+
+        min_std_mass = [m - std for m, std in zip(mean_mass, std_mass)]
+        max_std_mass = [m + std for m, std in zip(mean_mass, std_mass)]
+
+        # Create a secondary y-axis for mass concentration
+        ax2 = ax.twinx()
+        
+        # Plotting for the mass concentration
+        ax2.fill_between(bins, min_std_mass, max_std_mass, alpha=0.2, color=clr[1], linewidth=0)
+        ax2.errorbar(bins, mean_mass, error_mass, ecolor='k', elinewidth=1, capsize=2, capthick=1, color=clr[1], lw = 1)
+
+        # Explicitly set ylabel color for secondary axis
+        ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
+        ax2.tick_params(axis='y', labelcolor=clr[1])
+
+def calc_mass_conc(df, df_keys, bin_cut_points, bin_mid_points, rho):
+    bin_widths = []
+    for i, bin in enumerate(bin_cut_points[:-1]):
+        width = bin_cut_points[i+1] - bin
+        bin_widths.append(width)
+    
+    new_df = pd.DataFrame({'Time': df['Time']})
+    for i, key in enumerate(df_keys):
+        # Ensure df[key] is numeric
+        df[key] = pd.to_numeric(df[key], errors='coerce')
+        
+        n_M = (rho / 10**6) * (np.pi / 6) * bin_mid_points[i]**3 * df[key] # in ug * um**-1 * cm**-3
+        mass_conc = n_M * bin_widths[i] * 10**6
+        new_df[key] = mass_conc
+
+    return new_df
+
+def bin_edges(d_min, bin_mid):
+    bins_list = [d_min]
+
+    for i, bin in enumerate(bin_mid):
+        bin_max = bin**2 / bins_list[i]
+        bins_list.append(bin_max)
+    
+    return bins_list
