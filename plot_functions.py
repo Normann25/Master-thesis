@@ -89,13 +89,13 @@ def ma200_multi_timeseries(ax, data, dict_keys):
         title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
         ax[i].set_title(title)
 
-def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration, ylabel):
+def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration, ylabel, timelabel):
     
     start_time = pd.to_datetime(start_time)
     end_time = pd.to_datetime(end_time)
 
     
-    time = pd.to_datetime(data_dict[dict_key]['timestamp'])  
+    time = pd.to_datetime(data_dict[dict_key][timelabel])  
     Conc = np.array(data_dict[dict_key][concentration])
 
 

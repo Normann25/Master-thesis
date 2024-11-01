@@ -38,7 +38,27 @@ def format_timestamps(timestamps, old_format, new_format):
         new_timestamps.append(new_datetime)
     return pd.to_datetime(new_timestamps, format=new_format)
 
+# def plot_CPC_timeseries(ax, fig): 
+
+
+def read_LCS_data(path, time_label, names):
+
+   files = os.listdir(path)
+   data_dict = {}
+
+   for name in names:
+      for file in files:
+         if name in file:
+            with open(os.path.join(path, file)) as f:
+               df = pd.read_table(f, sep = ';')
+
+               df[df.keys()[0]] = format_timestamps(df[df.keys()[0]], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
+
+            data_dict[name] =df 
+   
+   return data_dict
 
 
 
-      
+
+
