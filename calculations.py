@@ -283,7 +283,6 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
     mean = np.zeros(len(df_keys))
     std = np.zeros(len(df_keys))
-    error = np.zeros(len(df_keys))
 
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -297,12 +296,12 @@ def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
         # Convert the concentration data to numeric, coercing errors
         conc = pd.to_numeric(conc, errors='coerce')
         filtered_conc = conc[time_filter]
-        errors = filtered_conc * inst_error
-        error[i] += errors.mean()
         mean[i] += filtered_conc.mean()
         std[i] += filtered_conc.std()
     
-    return mean, std, error
+    errors = mean * inst_error
+
+    return mean, std, errors
 
 def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
