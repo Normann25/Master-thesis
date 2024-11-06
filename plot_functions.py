@@ -249,27 +249,43 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
     y, x = np.meshgrid(bin_edges, new_time)
 
     # Fill the generated mesh with particle concentration data
-    p = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
+    p1 = ax[0].pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
 
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax.set_xlabel("Time, HH:MM")
+    ax[0].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax[0].set_xticklabels(ax[0].get_xticklabels(), rotation=-45, ha="left")
+    ax[0].set_xlabel("Time, HH:MM")
     plt.subplots_adjust(hspace=0.05)
         
     # Make the y-scal logarithmic and set a label
-    ax.set_yscale("log")
-    ax.set_ylabel("Dp, nm")
-    
+    ax[0].set_yscale("log")
+    ax[0].set_ylabel("Dp, nm")
+
+    total_conc = new_df.iloc[:,1:].sum(axis=1)
+    ax[1].plot(new_df['Time'], total_conc, lw = 1, color = 'r')
+
+    ax[1].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax[1].set_xticklabels(ax[1].get_xticklabels(), rotation=-45, ha="left")
+    ax[1].set_xlabel("Time, HH:MM")
+    plt.subplots_adjust(hspace=0.05)
+
     # Insert coloarbar and label it
-    col = fig.colorbar(p, ax=ax)
+    col = fig.colorbar(p1, ax=ax[0])
     if datatype == "number":
         col.set_label('dN, cm$^{-3}$')
+        ax[1].set_ylabel('dN, cm$^{-3}$')
     elif datatype == "mass":
         col.set_label('dm, $\mu$g/m$^{3}$')
+        ax[1].set_ylabel('dm, $\mu$g/m$^{3}$')
     elif datatype == "normed":
         col.set_label('dN/dlogDp, cm$^{-3}$')
-    
+        ax[1].set_ylabel('dN/dlogDp, cm$^{-3}$')
+
     # Set ticks on the plot to be longer
-    ax.tick_params(axis="y",which="both",direction='out')
+    ax[0].tick_params(axis="y",which="both",direction='out')
+    ax[1].tick_params(axis="y",which="both",direction='out')
+
+    # # Add the colorbar to the axis handles, enabling adjustments after the function is run
+    # ax = np.append(ax, col)
 
 def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
