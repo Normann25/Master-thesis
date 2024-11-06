@@ -259,14 +259,14 @@ def read_OPS(path, parent_path): # , V_chamber):
                     Timestamps.append(timestamp)
                 df['Time'] = Timestamps
 
-                df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
-
                 for key in df.keys()[1:18]:
                     C_i, ts, td = np.array(df[key]), np.array(df['Elapsed Time [s]']), np.array(df['Deadtime (s)'])
 
-                    N_i = C_i * (16.67 * (ts - DCT * td))
+                    N_i = C_i / (16.67 * (ts - DCT * td))
                     df[key] = N_i # / V_chamber
 
+                df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
+                
                 df = df.drop(['Alarms', 'Errors'], axis = 1)
 
                 new_dict[name] = df

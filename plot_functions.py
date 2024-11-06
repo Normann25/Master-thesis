@@ -8,6 +8,8 @@ import time
 from datetime import datetime
 import matplotlib.dates as mdates
 import linecache
+sys.path.append('..')
+from calculations import *
 #%%
 def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
@@ -268,3 +270,153 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
     
     # Set ticks on the plot to be longer
     ax.tick_params(axis="y",which="both",direction='out')
+
+def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass):
+    mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
+
+    min_std_number = [m - std for m, std in zip(mean_number, std_number)]
+    max_std_number = [m + std for m, std in zip(mean_number, std_number)]
+
+    ax.fill_between(bins, min_std_number, max_std_number, alpha=0.2, color=clr[0], linewidth=0)
+    ax.errorbar(bins, mean_number, error_number, ecolor='k', elinewidth=1, capsize=2, capthick=1, color=clr[0], lw = 1)
+
+    # Explicitly set ylabel color for primary axis
+    ax.set_ylabel(axis_labels[1], color=clr[0])
+    ax.tick_params(axis='y', labelcolor=clr[0])
+    ax.set(xlabel=axis_labels[0], xscale='log')
+
+    if mass == True:
+        mean_mass, std_mass, error_mass = bin_mean(timestamps, df_mass, df_keys, timelabel, inst_error)
+
+        min_std_mass = [m - std for m, std in zip(mean_mass, std_mass)]
+        max_std_mass = [m + std for m, std in zip(mean_mass, std_mass)]
+
+        # Create a secondary y-axis for mass concentration
+        ax2 = ax.twinx()
+        
+        # Plotting for the mass concentration
+        ax2.fill_between(bins, min_std_mass, max_std_mass, alpha=0.2, color=clr[1], linewidth=0)
+        ax2.errorbar(bins, mean_mass, error_mass, ecolor='k', elinewidth=1, capsize=2, capthick=1, color=clr[1], lw = 1)
+
+        # Explicitly set ylabel color for secondary axis
+        ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
+        ax2.tick_params(axis='y', labelcolor=clr[1])
+
+def plot_reference(ax, x_plot, data, keys, labels):
+    # Plot a scatter plot of the two concentrations
+    ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
+
+    a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
+    y_fit = a*x_plot + b
+
+    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
+
+    scatter_lbl = labels[0].split(' ')[0] + ' vs ' + labels[1].split(' ')[0]
+    ax.scatter(data[keys[0]], data[keys[1]], s=10, c='blue', label = scatter_lbl) 
+
+    # Set labels and title for the scatter plot
+    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
+    ax.set_xlabel(labels[0], fontsize=8)
+    ax.set_ylabel(labels[1], fontsize=8)
+    ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
+
+    ax.legend(fontsize = 8)
+
+def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels):
+
+    new_dict = {}
+    for key in dict_keys:
+        time = pd.to_datetime(data_dict[key][timelabel]).round('10s')
+        conc = np.array(data_dict[key][concentration])
+        df = pd.DataFrame({timelabel: time, key: conc})
+        new_dict[key] = df
+
+    # Merge the two dataframes
+    merged = pd.DataFrame({timelabel: []})
+    names = []
+    for key in dict_keys:
+        merged = pd.merge(merged, new_dict[key], on = timelabel, how = 'outer')
+        names.append(key.split('_')[0])
+    merged = merged.dropna()
+
+    plot_reference(ax, x_plot, merged, dict_keys, axis_labels)
+
+def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels):
+
+    # Convert start_time and end_time to datetime objects if they are strings
+    start_time = pd.to_datetime(start_time)
+    end_time = pd.to_datetime(end_time)
+
+    new_dict = {}
+    for i, key in enumerate(dict_keys):
+        # Extract time and concentration data for both datasets
+        time = pd.to_datetime(data_dict[key]['timestamp'])
+        conc = np.array(data_dict[key][concentration[i]])
+
+        # Apply the time filter to both datasets
+        time_filter = (time >= start_time) & (time <= end_time)
+        filtered_time = time[time_filter]
+        filtered_conc = conc[time_filter]
+
+        # Create DataFrames to align both datasets by timestamp
+        df = pd.DataFrame({'timestamp': filtered_time, key: filtered_conc})
+        new_dict[key] = df
+
+    # Merge the two dataframes
+    merged_df = pd.merge(new_dict[dict_keys[0]], new_dict[dict_keys[1]], on='timestamp', how='inner')
+
+    x_plot = np.linspace(0, max(merged_df[dict_keys[0]]), 100)
+    
+    plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels)
+
+def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps):
+    # Convert start_time and end_time to datetime objects if they are strings
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    # Extract time and concentration data for both datasets
+    time = pd.to_datetime(ref_data[timelabel[1]]).round('60s')
+    conc = np.array(ref_data[concentration[1]])
+
+    # Apply the time filter to both datasets
+    time_filter = (time >= start_time) & (time <= end_time)
+    filtered_time = time[time_filter]
+    filtered_conc = conc[time_filter]
+
+    # Create DataFrames to align both datasets by timestamp
+    ref_df = pd.DataFrame({timelabel[0]: filtered_time, 'Reference': filtered_conc})
+
+    for i, key in enumerate(data_keys):
+        if 'dm' in key:
+            new_df = running_mean(data, key, concentration[0], timelabel[0], '1T', 1) # '1T' is for 1-minute intervals
+
+            merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
+
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+
+        if 'ma200' in key:
+            time = pd.to_datetime(data[key][timelabel[0]]).round('60s')
+            conc = np.array(data[key][concentration[0]])
+            new_df = pd.DataFrame({timelabel: time, key: conc})
+
+            merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
+
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+        
+        if 'dm' not in key:
+            if 'ma200' not in key:
+                time = pd.to_datetime(data[key][timelabel[0]]).round('60s')
+                conc = np.array(data[key][concentration[0]])
+
+                # Apply the time filter to both datasets
+                time_filter = (time >= start_time) & (time <= end_time)
+                filtered_time = time[time_filter]
+                filtered_conc = conc[time_filter]
+
+                # Create DataFrames to align both datasets by timestamp
+                new_df = pd.DataFrame({'timestamp': filtered_time, key: filtered_conc})
+                
+                merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
+
+                plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
