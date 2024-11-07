@@ -81,10 +81,13 @@ def read_csv_BC(path, parent_path):
     data_dict = {}
 
     for file in files:
-        if '.csv' in file:
+        if 'MA200' or 'MA300' in file:
+            serial_number = linecache.getline(os.path.join(path, file), 2)
+            serial_number = serial_number.split(',')[0]
+            serial_number = serial_number.split('"')[1]
             name = file.split('.')[0]
-            name = name.split('-')[1]
-            name = 'ma200' + '_' + name.split('_')[0] + '_' + name.split('_')[2]
+            name = serial_number + '_' + name.split('_')[-1]
+
             with open(os.path.join(path, file)) as f:
                 df = pd.read_csv(f)
                 
@@ -92,18 +95,18 @@ def read_csv_BC(path, parent_path):
 
                 df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")
 
-                new_df = pd.DataFrame()
-                columns = ['Time', 'Sample temp (C)', 'Sample RH (%)', 'UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
-                for col in columns:
-                    new_df[col] = df[col]
+                # new_df = pd.DataFrame()
+                # columns = ['Time', 'Sample temp (C)', 'Sample RH (%)', 'UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
+                # for col in columns:
+                #     new_df[col] = df[col]
 
-                new_df = new_df.dropna()
-                for key in new_df.keys():
+                # new_df = new_df.dropna()
+                for key in df.keys():
                     if 'BCc' in key:
-                        new_df[key][new_df[key] < 0] = 0
-                        new_df[key] = new_df[key] / 1000
+                        df[key][df[key] < 0] = 0
+                        df[key] = df[key] / 1000
 
-            data_dict[name] = new_df
+            data_dict[name] = df
 
     return data_dict 
 

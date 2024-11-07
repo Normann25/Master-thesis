@@ -71,8 +71,32 @@ def discmini_multi_timeseries(ax, data, dict_keys, n, titles):
         discmini_single_timeseries(ax[i], df, n[i])
         ax[i].set_title(titles[i])
 
-def ma200_single_timeseries(ax, df):
-    ax.plot(df['Time'], df['IR BCc'])
+def ma_single_timeseries(ax, df, screening, timestamps):
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    time = pd.to_datetime(df['Time'])
+
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    filtered_time = np.array(time[time_filter])
+
+    conc_keys = ['UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
+    colors = ['darkviolet', 'blue', 'green', 'red', 'k']
+
+    if screening:
+        conc = np.array(df['IR BCc'])
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+        ax.plot(filtered_time, filtered_conc)
+    
+    else:
+        for key, clr in zip(conc_keys, colors):
+            conc = np.array(df[key])
+            conc = pd.to_numeric(conc, errors='coerce')
+            filtered_conc = conc[time_filter]
+            ax.plot(filtered_time, filtered_conc, color = clr, label = key)
+            ax.legend(frameon = False, fontsize = 8)
 
     # Set the x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
@@ -80,19 +104,18 @@ def ma200_single_timeseries(ax, df):
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     # Rotate and format date labels
     plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
-    # formatter = FuncFormatter(lambda s, x: time.strftime('%H:%M', time.gmtime(s)))
-    # ax.xaxis.set_major_formatter(formatter)
-    # ax.set_xticklabels(ax.get_xticklabels(), size = 8)
 
     ax.set_xlabel('Time [HH:MM]', fontsize = 9)
     ax.set_ylabel('Concentration / $\mu$g/m$^{3}$', fontsize = 9)
 
-def ma200_multi_timeseries(ax, data, dict_keys):
+def ma_multi_timeseries(ax, data, dict_keys, screening, timestamps):
     for i, key in enumerate(dict_keys):
         df = data[key]
-        ma200_single_timeseries(ax[i], df)
-        title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
-        ax[i].set_title(title)
+        ma_single_timeseries(ax[i], df, screening, timestamps)
+
+        if screening:
+            title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
+            ax[i].set_title(title)
 
 def plot_LCS_single(ax, data_dict, dict_key, timelabel, start_time, end_time, concentration, ylabel):
     # Convert start_time and end_time to datetime objects if they are strings
@@ -145,74 +168,6 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
 
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
-
-def OPS_single_timeseries(ax, df, colors, timestamps):
-
-    start_time = pd.to_datetime(timestamps[0])
-    end_time = pd.to_datetime(timestamps[1])
-
-    time = pd.to_datetime(df['Time'])
-    conc = np.array(df['Total Conc'])
-    conc = pd.to_numeric(conc, errors='coerce')
-
-    time_filter = (time >= start_time) & (time <= end_time)
-
-    filtered_time = time[time_filter]
-    filtered_conc = conc[time_filter]
-
-    new_df = pd.DataFrame({'Time': filtered_time, 'Total Conc': filtered_conc})
-
-    for key in df.keys()[1:18]:
-        conc = np.array(df[key])
-        conc = pd.to_numeric(conc, errors='coerce')
-        filtered_conc = conc[time_filter]
-
-        new_df[key] = filtered_conc
-        # ax.plot(df['Time'], df[key], label = key, color = colors[i+1], lw = 1)
-
-    # Bin plot
-    ax.plot(new_df['Time'], new_df['Total Conc'], label = 'Total', zorder = 10, color = colors[0], lw = 1)
-    ax.plot(new_df['Time'], new_df.iloc[:,2:5].sum(axis = 1), color = colors[1], label = '0.300 - 0.465 $\mu$m')
-    ax.plot(new_df['Time'], new_df.iloc[:,5:8].sum(axis = 1), color = colors[2], label = '0.465 - 0.897 $\mu$m')
-    ax.plot(new_df['Time'], new_df.iloc[:,8:11].sum(axis = 1), color = colors[3], label = '0.897 - 1.732 $\mu$m')
-    ax.plot(new_df['Time'], new_df.iloc[:,11:13].sum(axis = 1), color = colors[4], label = '1.732 - 2.685 $\mu$m')
-    ax.plot(new_df['Time'], new_df.iloc[:,13:15].sum(axis = 1), color = colors[5], label = '2.685 - 4.162 $\mu$m')
-    ax.plot(new_df['Time'], new_df.iloc[:,15:].sum(axis = 1), color = colors[6], label = '4.162 - 10.000 $\mu$m')
-
-    # Set the x-axis major formatter to a date format
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
-    plt.setp(ax.yaxis.get_majorticklabels(), size = 8)
-
-    ax.ticklabel_format(axis = 'y', style = 'sci', scilimits = (4,4))
-
-    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-    ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
-
-    ax.legend(frameon = False, fontsize = 8, ncol = 1)
-
-
-def NanoScan_single_timeseries(ax, df, ncol):
-    
-    ax.plot(df['Time'], df['Total Conc'], label = 'Total', zorder = 10)
-
-    for key in df.keys()[3:16]:
-        ax.plot(df['Time'], df[key], label = key + ' nm', lw = 1)
-
-    # Set the x-axis major formatter to a date format
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
-
-    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-    ax.set_ylabel('Concentration / #/cm$^{3}$', fontsize = 9)
-
-    ax.legend(frameon = False, fontsize = 8, ncol = ncol)
 
 def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
 
@@ -283,9 +238,6 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
     # Set ticks on the plot to be longer
     ax[0].tick_params(axis="y",which="both",direction='out')
     ax[1].tick_params(axis="y",which="both",direction='out')
-
-    # # Add the colorbar to the axis handles, enabling adjustments after the function is run
-    # ax = np.append(ax, col)
 
 def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
