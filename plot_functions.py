@@ -89,7 +89,7 @@ def ma200_multi_timeseries(ax, data, dict_keys):
         title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
         ax[i].set_title(title)
 
-def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration, ylabel, timelabel):
+def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration, ylabel, timelabel, label):
     
     start_time = pd.to_datetime(start_time)
     end_time = pd.to_datetime(end_time)
@@ -105,17 +105,16 @@ def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration
     time_filtered = time[time_filter]
     Conc_filtered = Conc[time_filter]
 
-
-    ax.plot(time_filtered, Conc_filtered, lw=1)
+    
+    ax.plot(time_filtered, Conc_filtered, lw=1, label = label)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
 
     
     plt.setp(ax.xaxis.get_majorticklabels())
 
-
+    ax.legend()
     ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
-    ax.set_title(dict_key, fontsize=9)
     ax.set_ylabel(ylabel, fontsize = 8)
 
 def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, ylabel):
