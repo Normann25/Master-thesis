@@ -146,18 +146,49 @@ def linear_fit(x, y, a_guess, b_guess):
     
     return a_fit, b_fit, squares_fit, Ndof_fit, R2
 
-def running_mean(data, key, concentration, timelabel, interval, wndow):
+def running_mean(data, dictkey, concentration, timelabel, interval, wndw, timestamps):
+    df = data[dictkey]
+
     # Set 'Time' as the index
     new_df = pd.DataFrame() 
-    new_df[timelabel] = pd.to_datetime(data[key][timelabel])
-    new_df[key] = data[key][concentration]
-    new_df = new_df.set_index(timelabel)
 
-    # Resample the data to bins 
-    new_df = new_df.resample(interval).mean() 
-    
-    # Now, apply the rolling mean
-    new_df[key] = new_df[key].rolling(window = wndow, min_periods = 1).mean()
+    if timestamps == None:
+        new_df[timelabel] = pd.to_datetime(df[timelabel])
+        new_df[dictkey] = df[concentration]
+        new_df = new_df.set_index(timelabel)
+
+        # Resample the data to bins 
+        new_df = new_df.resample(interval).mean() 
+        
+        # Now, apply the rolling mean
+        new_df[dictkey] = new_df[dictkey].rolling(window = wndw, min_periods = 1).mean()
+
+    if timestamps != None:
+        start_time = pd.to_datetime(timestamps[0])
+        end_time = pd.to_datetime(timestamps[1])
+
+        time = pd.to_datetime(df[timelabel])
+
+        time_filter = (time >= start_time) & (time <= end_time)
+
+        filtered_time = pd.to_datetime(np.array(time[time_filter]))
+
+        new_df = pd.DataFrame({'Time': filtered_time})
+        new_df = new_df.set_index('Time')
+        
+        for key in concentration:
+            conc = np.array(df[key])
+            conc = pd.to_numeric(conc, errors='coerce')
+            filtered_conc = conc[time_filter]
+
+            new_df[key] = filtered_conc
+
+        # Resample the data to bins 
+        new_df = new_df.resample(interval).mean() 
+        
+        for key in concentration:
+            # Now, apply the rolling mean
+            new_df[key] = new_df[key].rolling(window = wndw, min_periods = 1).mean()
 
     return new_df
 

@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 import matplotlib.dates as mdates
 import linecache
+from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 sys.path.append('..')
 from calculations import *
 #%%
@@ -269,6 +270,25 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
         # Explicitly set ylabel color for secondary axis
         ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
         ax2.tick_params(axis='y', labelcolor=clr[1])
+
+def plot_running_mean(ax, df, bins, cols, axis_labels):
+    colors = ['k', 'tab:blue', 'tab:orange', 'g', 'r', 'tab:purple', 'tab:brown', 'm', 'tab:gray', 
+              'tab:cyan', 'maroon', 'lime']
+    
+    ax.plot(bins, df[df.keys()[0]], color = colors[0], label = 'Background', lw = 1)
+
+    for i, key in enumerate(df.keys()[1:]):
+        lbl = str(key).split(' ')[1]
+
+        ax.plot(bins, df[key], color = colors[i+1], label = lbl, lw = 1)
+    
+    ax.legend(frameon = False, fontsize = 8, ncol = cols)
+    ax.xaxis.set_minor_locator(AutoMinorLocator())
+    ax.yaxis.set_minor_locator(AutoMinorLocator())
+    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
+    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', width = 1, length = 2, bottom = True, left = True)
+
+    ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
 
 def plot_reference(ax, x_plot, data, keys, labels):
     # Plot a scatter plot of the two concentrations
