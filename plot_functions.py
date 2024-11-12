@@ -170,6 +170,31 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
     # Add common x and y labels for the figure
     fig.supxlabel('Time', fontsize=10)
 
+def partector_single_timeseries(ax, df, timestamps, loc):
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    time = pd.to_datetime(df['Time'])
+
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    filtered_time = np.array(time[time_filter])
+
+    conc = np.array(df['LDSA'])
+    conc = pd.to_numeric(conc, errors='coerce')
+    filtered_conc = conc[time_filter]
+    ax.plot(filtered_time, filtered_conc, color = 'r', lw = 1)
+
+    # Set the x-axis major formatter to a date format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    # Rotate and format date labels
+    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
+
+    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
+    ax.set_ylabel('LDSA / $\mu$m$^{2}$/cm$^{3}$', fontsize = 9)
+
 def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
 
     start_time = pd.to_datetime(timestamps[0])

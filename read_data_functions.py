@@ -295,3 +295,35 @@ def read_OPS(path, parent_path): # , V_chamber):
                     print(f'Failed to read file with separation: {separation}')
         
     return new_dict
+
+def read_partector(path, parent_path, names):
+    new_dict = {}
+
+    ParentPath = os.path.abspath(parent_path)
+    if ParentPath not in sys.path:
+        sys.path.insert(0, ParentPath)
+    
+    files = os.listdir(path)
+
+    for name in names:
+        for file in files:
+            if name in file:
+                start_date = linecache.getline(os.path.join(path, file), 5).split(' ')[1]
+                start_time = linecache.getline(os.path.join(path, file), 5).split(' ')[-1]
+                start_time = start_time.split('\n')[0]
+                start_time = start_date + ' ' + start_time
+                old_time = datetime.strptime(start_time, "%d.%m.%Y %H:%M:%S")
+                new_time = old_time.strftime("%d/%m/%Y %H:%M:%S")
+                
+                with open(os.path.join(path, file), 'r') as f:
+                    df = pd.read_table(f, sep = '\t', skiprows = 10)
+                
+                Timestamps = []
+                for time in df['time']:
+                    timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
+                    Timestamps.append(timestamp)
+                df['Time'] = Timestamps
+
+                new_dict[name] = df
+    
+    return new_dict
