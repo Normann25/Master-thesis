@@ -113,7 +113,7 @@ def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration
     
     plt.setp(ax.xaxis.get_majorticklabels())
 
-    ax.legend()
+    ax.legend(frameon = False)
     ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
     ax.set_ylabel(ylabel, fontsize = 8)
 
