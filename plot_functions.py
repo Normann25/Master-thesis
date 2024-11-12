@@ -72,7 +72,7 @@ def discmini_multi_timeseries(ax, data, dict_keys, n, titles):
         discmini_single_timeseries(ax[i], df, n[i])
         ax[i].set_title(titles[i])
 
-def ma_single_timeseries(ax, df, screening, timestamps):
+def ma_single_timeseries(ax, df, screening, timestamps, loc):
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
 
@@ -97,7 +97,7 @@ def ma_single_timeseries(ax, df, screening, timestamps):
             conc = pd.to_numeric(conc, errors='coerce')
             filtered_conc = conc[time_filter]
             ax.plot(filtered_time, filtered_conc, color = clr, label = key)
-            ax.legend(frameon = False, fontsize = 8)
+            ax.legend(frameon = False, fontsize = 8, loc = loc)
 
     # Set the x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
