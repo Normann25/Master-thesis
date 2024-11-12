@@ -270,8 +270,14 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
         # Explicitly set ylabel color for secondary axis
         ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
         ax2.tick_params(axis='y', labelcolor=clr[1])
+    
+    if mass != True:
+        ax2 = 0
+        mean_mass = 0
+    
+    return mean_number, mean_mass, ax, ax2
 
-def plot_running_mean(ax, df, bins, cols, axis_labels):
+def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     colors = ['k', 'tab:blue', 'tab:orange', 'g', 'r', 'tab:purple', 'tab:brown', 'm', 'tab:gray', 
               'tab:cyan', 'maroon', 'lime']
     
@@ -282,7 +288,7 @@ def plot_running_mean(ax, df, bins, cols, axis_labels):
 
         ax.plot(bins, df[key], color = colors[i+1], label = lbl, lw = 1)
     
-    ax.legend(frameon = False, fontsize = 8, ncol = cols)
+    ax.legend(fontsize = 8, ncol = cols, loc = loc)
     ax.xaxis.set_minor_locator(AutoMinorLocator())
     ax.yaxis.set_minor_locator(AutoMinorLocator())
     ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
