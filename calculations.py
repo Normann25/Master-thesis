@@ -146,9 +146,7 @@ def linear_fit(x, y, a_guess, b_guess):
     
     return a_fit, b_fit, squares_fit, Ndof_fit, R2
 
-def running_mean(data, dictkey, concentration, timelabel, interval, wndw, timestamps):
-    df = data[dictkey]
-
+def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestamps):
     # Set 'Time' as the index
     new_df = pd.DataFrame() 
 
@@ -211,7 +209,10 @@ def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
         mean[i] += filtered_conc.mean()
         std[i] += filtered_conc.std()
     
-    errors = mean * inst_error
+    if inst_error != None:
+        errors = mean * inst_error
+    else:
+        errors = 0
 
     return mean, std, errors
 
@@ -238,3 +239,30 @@ def bin_edges(d_min, bin_mid):
         bins_list.append(bin_max)
     
     return bins_list
+
+def binned_mean(timestamps, dict_number, dict_mass, dict_keys, bins, cut_point, timelabel, mass):
+    running_number = {}
+    running_mass = {}
+    for i, key in enumerate(dict_keys):
+        df_number = pd.DataFrame({'Time': dict_number[key]['Time']})
+        for size, cut in zip(bins, cut_point):
+            df_number[size] = dict_number[key].iloc[:,1:cut].sum(axis = 1)
+        mean_number, std, errors = bin_mean(timestamps[0][i], df_number, bins, timelabel, None)
+        increase_number, std, errors = bin_mean(timestamps[1][i], df_number, bins, timelabel, None)
+        bg_number = pd.DataFrame({'Background': mean_number, 'Increase': increase_number}).T
+        bg_number.columns = bins
+        exp_number = running_mean(df_number, None, bins, 'Time', '10T', 10, timestamps[2][i])
+        running_number[key] = pd.concat([bg_number, exp_number])
+
+        if mass == True:
+            df_mass = pd.DataFrame({'Time': dict_mass[key]['Time']})
+            for size, cut in zip(bins, cut_point):
+                df_mass[size] = dict_mass[key].iloc[:,1:cut].sum(axis = 1)
+            mean_mass, std, errors = bin_mean(timestamps[0][i], df_mass, bins, timelabel, None)
+            increase_mass, std, errors = bin_mean(timestamps[1][i], df_mass, bins, timelabel, None)
+            bg_mass = pd.DataFrame({'Background': mean_mass, 'Increase': increase_mass}).T
+            bg_mass.columns = bins
+            exp_mass = running_mean(df_mass, None, bins, 'Time', '10T', 10, timestamps[2][i])
+            running_mass[key] = pd.concat([bg_mass, exp_mass])
+
+    return running_number, running_mass  
