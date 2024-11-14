@@ -289,6 +289,8 @@ def read_OPS(path, parent_path): # , V_chamber):
                     df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
                     # df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
 
+                    df = df.drop(['Sample #', 'Date', 'Start Time'], axis = 1)
+
                     new_dict[name] = df
 
                 except KeyError:

@@ -240,13 +240,13 @@ def bin_edges(d_min, bin_mid):
     
     return bins_list
 
-def binned_mean(timestamps, dict_number, dict_mass, dict_keys, bins, cut_point, timelabel, mass):
+def binned_mean(timestamps, dict_number, dict_mass, dict_keys, bins, start_point, cut_point, timelabel, mass):
     running_number = {}
     running_mass = {}
     for i, key in enumerate(dict_keys):
         df_number = pd.DataFrame({'Time': dict_number[key]['Time']})
         for size, cut in zip(bins, cut_point):
-            df_number[size] = dict_number[key].iloc[:,1:cut].sum(axis = 1)
+            df_number[size] = dict_number[key].iloc[:,start_point[0]:cut].sum(axis = 1)
         mean_number, std, errors = bin_mean(timestamps[0][i], df_number, bins, timelabel, None)
         increase_number, std, errors = bin_mean(timestamps[1][i], df_number, bins, timelabel, None)
         bg_number = pd.DataFrame({'Background': mean_number, 'Increase': increase_number}).T
@@ -257,7 +257,7 @@ def binned_mean(timestamps, dict_number, dict_mass, dict_keys, bins, cut_point, 
         if mass == True:
             df_mass = pd.DataFrame({'Time': dict_mass[key]['Time']})
             for size, cut in zip(bins, cut_point):
-                df_mass[size] = dict_mass[key].iloc[:,1:cut].sum(axis = 1)
+                df_mass[size] = dict_mass[key].iloc[:,start_point[1]:cut].sum(axis = 1)
             mean_mass, std, errors = bin_mean(timestamps[0][i], df_mass, bins, timelabel, None)
             increase_mass, std, errors = bin_mean(timestamps[1][i], df_mass, bins, timelabel, None)
             bg_mass = pd.DataFrame({'Background': mean_mass, 'Increase': increase_mass}).T
