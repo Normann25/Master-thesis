@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import pandas as pd
 import os
 import sys
@@ -303,10 +304,11 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
     return mean_number, mean_mass, ax, ax2
 
 def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
-    colors = ['k', 'tab:blue', 'tab:orange', 'g', 'r', 'tab:purple', 'tab:brown', 'm', 'tab:gray', 
-              'tab:cyan', 'maroon', 'lime']
+    n_lines = len(df.keys())
+    cmap = mpl.colormaps['GnBu']
+    colors = cmap(np.linspace(0, 1, n_lines))
     
-    ax.plot(bins, df[df.keys()[0]], color = colors[0], label = 'Background', lw = 1)
+    ax.plot(bins, df[df.keys()[0]], color = 'k', label = 'Background', lw = 1)
 
     for i, key in enumerate(df.keys()[1:]):
         lbl = str(key).split(' ')[1]
