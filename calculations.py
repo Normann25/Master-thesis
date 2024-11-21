@@ -222,3 +222,121 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
     ax.set_ylabel(axis_labels[1], fontsize=8)
 
     ax.legend(frameon = False, fontsize = 8)
+
+def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestamps):
+    # Set 'Time' as the index
+    new_df = pd.DataFrame() 
+
+    if timestamps == None:
+        new_df[timelabel] = pd.to_datetime(df[timelabel])
+        new_df[dictkey] = df[concentration]
+        new_df = new_df.set_index(timelabel)
+
+        # Resample the data to bins 
+        new_df = new_df.resample(interval).mean() 
+        
+        # Now, apply the rolling mean
+        new_df[dictkey] = new_df[dictkey].rolling(window = wndw, min_periods = 1).mean()
+
+    if timestamps != None:
+        start_time = pd.to_datetime(timestamps[0])
+        end_time = pd.to_datetime(timestamps[1])
+
+        time = pd.to_datetime(df[timelabel])
+
+        time_filter = (time >= start_time) & (time <= end_time)
+
+        filtered_time = pd.to_datetime(np.array(time[time_filter]))
+
+        new_df = pd.DataFrame({'Time': filtered_time})
+        new_df = new_df.set_index('Time')
+        
+        for key in concentration:
+            conc = np.array(df[key])
+            conc = pd.to_numeric(conc, errors='coerce')
+            filtered_conc = conc[time_filter]
+
+            new_df[key] = filtered_conc
+
+        # Resample the data to bins 
+        new_df = new_df.resample(interval).mean() 
+        
+        for key in concentration:
+            # Now, apply the rolling mean
+            new_df[key] = new_df[key].rolling(window = wndw, min_periods = 1).mean()
+
+    return new_df
+
+def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
+    mean = np.zeros(len(df_keys))
+    std = np.zeros(len(df_keys))
+
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    time = pd.to_datetime(df[timelabel])
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    for i, key in enumerate(df_keys):
+        conc = np.array(df[key].dropna())
+        
+        # Convert the concentration data to numeric, coercing errors
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+        mean[i] += filtered_conc.mean()
+        std[i] += filtered_conc.std()
+    
+    if inst_error != None:
+        errors = mean * inst_error
+    else:
+        errors = 0
+
+    return mean, std, errors
+
+def calc_mass_conc(df, df_keys, bin_mid_points, rho):   # bin_cut_points,
+    # bin_widths = []
+    # for i, bin in enumerate(bin_cut_points[:-1]):
+    #     width = bin_cut_points[i+1] - bin
+    #     bin_widths.append(width)
+    
+    new_df = pd.DataFrame({'Time': df['Time']})
+    for i, key in enumerate(df_keys):
+        # Ensure df[key] is numeric
+        df[key] = pd.to_numeric(df[key], errors='coerce')
+        
+        new_df[key] = (rho / 10**6) * (np.pi / 6) * bin_mid_points[i]**3 * df[key] * 10**6 # in ug * m**-3
+
+    return new_df
+
+def bin_edges(d_min, bin_mid):
+    bins_list = [d_min]
+
+    for i, bin in enumerate(bin_mid):
+        bin_max = bin**2 / bins_list[i]
+        bins_list.append(bin_max)
+    
+    return bins_list
+
+def binned_mean(timestamps, dict_number, dict_keys, bins, timelabel):
+    running_number = {}
+    # running_mass = {}
+    for i, key in enumerate(dict_keys):
+        new_key = 'Exp' + str(i + 1)
+        df_number = dict_number[key]
+        mean_number, std, errors = bin_mean(timestamps[0][i], df_number, bins, timelabel, None)
+        increase_number, std, errors = bin_mean(timestamps[1][i], df_number, bins, timelabel, None)
+        bg_number = pd.DataFrame({'Background': mean_number, 'Increase': increase_number}).T
+        bg_number.columns = bins
+        exp_number = running_mean(df_number, None, bins, timelabel, '10T', 10, timestamps[2][i])
+        running_number[new_key] = pd.concat([bg_number, exp_number])
+
+        # if mass == True:
+        #     df_mass = pd.DataFrame({'Time': dict_mass[key]['Time']})
+        #     mean_mass, std, errors = bin_mean(timestamps[0][i], df_mass, bins, timelabel, None)
+        #     increase_mass, std, errors = bin_mean(timestamps[1][i], df_mass, bins, timelabel, None)
+        #     bg_mass = pd.DataFrame({'Background': mean_mass, 'Increase': increase_mass}).T
+        #     bg_mass.columns = bins
+        #     exp_mass = running_mean(df_mass, None, bins, 'Time', '10T', 10, timestamps[2][i])
+        #     running_mass[new_key] = pd.concat([bg_mass, exp_mass])
+
+    return running_number   # , running_mass 
