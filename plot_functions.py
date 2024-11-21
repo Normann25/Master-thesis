@@ -273,7 +273,7 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
     max_std_number = [m + std for m, std in zip(mean_number, std_number)]
 
     ax.fill_between(bins, min_std_number, max_std_number, alpha=0.2, color=clr[0], linewidth=0)
-    ax.errorbar(bins, mean_number, error_number, ecolor='k', elinewidth=1, capsize=2, capthick=1, color=clr[0], lw = 1)
+    ax.errorbar(bins, mean_number, error_number, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
 
     # Explicitly set ylabel color for primary axis
     ax.set_ylabel(axis_labels[1], color=clr[0])
@@ -291,7 +291,7 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
         
         # Plotting for the mass concentration
         ax2.fill_between(bins, min_std_mass, max_std_mass, alpha=0.2, color=clr[1], linewidth=0)
-        ax2.errorbar(bins, mean_mass, error_mass, ecolor='k', elinewidth=1, capsize=2, capthick=1, color=clr[1], lw = 1)
+        ax2.errorbar(bins, mean_mass, error_mass, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
 
         # Explicitly set ylabel color for secondary axis
         ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
@@ -305,13 +305,13 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
 
 def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     n_lines = len(df.keys())
-    cmap = mpl.colormaps['GnBu']
+    cmap = mpl.colormaps['plasma']
     colors = cmap(np.linspace(0, 1, n_lines))
 
     for i, key in enumerate(df.keys()[1:]):
         lbl = str(key).split(' ')[1]
 
-        ax.plot(bins, df[key], color = colors[i+1], label = lbl, lw = 1)
+        ax.plot(bins, df[key], color = colors[i+1], label = lbl, lw = 1.2)
     
     ax2 = ax.twinx()
     ax2.plot(bins, df[df.keys()[0]], color = 'k', alpha = 0.3, label = 'Background', lw = 1)

@@ -291,9 +291,9 @@ def read_OPS(path, parent_path): # , V_chamber):
 
                     df = df.drop(['Sample #', 'Date', 'Start Time'], axis = 1)
 
-                    if df['Aerodynamic Diameter'][1] == 'dN/dlogDp':
-                        for key in df.keys()[2:53]:
-                            df[key] = np.array(df[key]) * np.log10(float(key))
+                    # if df['Aerodynamic Diameter'][1] == 'dN/dlogDp':
+                    #     for key in df.keys()[2:53]:
+                    #         df[key] = np.array(pd.to_numeric(df[key])) * np.log10(float(key))
 
                     new_dict[name] = df
 
