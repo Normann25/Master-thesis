@@ -309,7 +309,7 @@ def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     colors = cmap(np.linspace(0, 1, n_lines))
 
     for i, key in enumerate(df.keys()[1:]):
-        lbl = str(key).split(' ')[1]
+        lbl = str(10 + i*10) + ' min'
 
         ax.plot(bins, df[key], color = colors[i+1], label = lbl, lw = 1.2)
     
