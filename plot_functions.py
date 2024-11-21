@@ -307,13 +307,14 @@ def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     n_lines = len(df.keys())
     cmap = mpl.colormaps['GnBu']
     colors = cmap(np.linspace(0, 1, n_lines))
-    
-    ax.plot(bins, df[df.keys()[0]], color = 'k', label = 'Background', lw = 1)
 
     for i, key in enumerate(df.keys()[1:]):
         lbl = str(key).split(' ')[1]
 
         ax.plot(bins, df[key], color = colors[i+1], label = lbl, lw = 1)
+    
+    ax2 = ax.twinx()
+    ax2.plot(bins, df[df.keys()[0]], color = 'k', alpha = 0.3, label = 'Background', lw = 1)
     
     ax.legend(fontsize = 8, ncol = cols, loc = loc)
     ax.xaxis.set_minor_locator(AutoMinorLocator())
@@ -322,6 +323,8 @@ def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     ax.tick_params(axis = 'both', which = 'minor', direction = 'out', width = 1, length = 2, bottom = True, left = True)
 
     ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
+    ax2.set_ylabel('Background ' + axis_labels[1], color = 'dimgrey')
+    ax2.tick_params(axis='y', labelcolor = 'dimgrey')
 
 def plot_reference(ax, x_plot, data, keys, labels):
     # Plot a scatter plot of the two concentrations
