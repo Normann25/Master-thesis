@@ -231,14 +231,14 @@ def calc_mass_conc(df, df_keys, bin_mid_points, rho):   # bin_cut_points,
 
     return new_df
 
-# def bin_edges(d_min, bin_mid):
-#     bins_list = [d_min]
+def bin_edges(d_min, bin_mid):
+    bins_list = [d_min]
 
-#     for i, bin in enumerate(bin_mid):
-#         bin_max = bin*2 - bins_list[i] 
-#         bins_list.append(bin_max)
+    for i, bin in enumerate(bin_mid):
+        bin_max = bin**2 / bins_list[i] 
+        bins_list.append(bin_max)
     
-#     return bins_list
+    return bins_list
 
 def binned_mean(timestamps, dict_number, dict_mass, dict_keys, bins, start_point, cut_point, timelabel, mass):
     running_number = {}
