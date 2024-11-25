@@ -1,0 +1,19 @@
+axes.titlesize : 12
+axes.labelsize : 9
+axes.xmargin : 0
+axes.formatter.limits : -2, 3
+
+lines.linewidth : 1.2
+
+xtick.labelsize : 8
+ytick.labelsize : 8
+xtick.minor.visible : True
+ytick.minor.visible : True
+
+legend.frameon : False
+legend.borderpad : 0.3
+legend.labelspacing : 0.4
+legend.handlelength : 1.5
+legend.handletextpad : 0.6
+legend.borderaxespad : 0.2
+legend.columnspacing : 1.0

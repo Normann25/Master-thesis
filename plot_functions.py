@@ -266,18 +266,32 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
     ax[0].tick_params(axis="y",which="both",direction='out')
     ax[1].tick_params(axis="y",which="both",direction='out')
 
-def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass):
+def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass, cut_point):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
 
     min_std_number = [m - std for m, std in zip(mean_number, std_number)]
     max_std_number = [m + std for m, std in zip(mean_number, std_number)]
+    abs_error_number = [abs(error) for error in error_number]
 
-    ax.fill_between(bins, min_std_number, max_std_number, alpha=0.2, color=clr[0], linewidth=0)
-    ax.errorbar(bins, mean_number, error_number, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
+    if cut_point == None:
+        ax.fill_between(bins, min_std_number, max_std_number, alpha=0.2, color=clr[0], linewidth=0)
+        ax.errorbar(bins, mean_number, abs_error_number, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
+    else:
+        df_number = pd.DataFrame({'Bin mean': bins, 'Concentration': mean_number, 'Std min': min_std_number, 'Std max': max_std_number, 'Error': abs_error_number})
+        
+        lower_cut = df_number['Bin mean'] < cut_point
+        upper_cut = df_number['Bin mean'] > cut_point
+
+        ax.fill_between(df_number['Bin mean'][lower_cut], df_number['Std min'][lower_cut], df_number['Std max'][lower_cut], alpha=0.2, color=clr[0], linewidth=0)
+        ax.errorbar(df_number['Bin mean'][lower_cut], df_number['Concentration'][lower_cut], df_number['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
+
+        ax.fill_between(df_number['Bin mean'][upper_cut], df_number['Std min'][upper_cut], df_number['Std max'][upper_cut], alpha=0.2, color=clr[0], linewidth=0)
+        ax.errorbar(df_number['Bin mean'][upper_cut], df_number['Concentration'][upper_cut], df_number['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
 
     # Explicitly set ylabel color for primary axis
+    ax.tick_params(axis = 'y', labelcolor=clr[0])
     ax.set_ylabel(axis_labels[1], color=clr[0])
-    ax.tick_params(axis='y', labelcolor=clr[0])
+
     ax.set(xlabel=axis_labels[0], xscale='log')
 
     if mass == True:
@@ -285,19 +299,33 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
 
         min_std_mass = [m - std for m, std in zip(mean_mass, std_mass)]
         max_std_mass = [m + std for m, std in zip(mean_mass, std_mass)]
+        abs_error_mass = [abs(error) for error in error_mass]
 
         # Create a secondary y-axis for mass concentration
         ax2 = ax.twinx()
         
         # Plotting for the mass concentration
-        ax2.fill_between(bins, min_std_mass, max_std_mass, alpha=0.2, color=clr[1], linewidth=0)
-        ax2.errorbar(bins, mean_mass, error_mass, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+        if cut_point == None:
+            ax2.fill_between(bins, min_std_mass, max_std_mass, alpha=0.2, color=clr[1], linewidth=0)
+            ax2.errorbar(bins, mean_mass, abs_error_mass, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+        else:
+            df_mass = pd.DataFrame({'Bin mean': bins, 'Concentration': mean_mass, 'Std min': min_std_mass, 'Std max': max_std_mass, 'Error': abs_error_mass})
+            
+            lower_cut = df_mass['Bin mean'] < cut_point
+            upper_cut = df_mass['Bin mean'] > cut_point
+
+            ax2.fill_between(df_mass['Bin mean'][lower_cut], df_mass['Std min'][lower_cut], df_mass['Std max'][lower_cut], alpha=0.2, color=clr[1], linewidth=0)
+            ax2.errorbar(df_mass['Bin mean'][lower_cut], df_mass['Concentration'][lower_cut], df_mass['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+
+            ax2.fill_between(df_mass['Bin mean'][upper_cut], df_mass['Std min'][upper_cut], df_mass['Std max'][upper_cut], alpha=0.2, color=clr[1], linewidth=0)
+            ax2.errorbar(df_mass['Bin mean'][upper_cut], df_mass['Concentration'][upper_cut], df_mass['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+
+        ax2.tick_params(axis = 'y', labelcolor=clr[1])
 
         # Explicitly set ylabel color for secondary axis
         ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
-        ax2.tick_params(axis='y', labelcolor=clr[1])
     
-    if mass != True:
+    else:
         ax2 = 0
         mean_mass = 0
     
@@ -306,7 +334,7 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
 def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     n_lines = len(df.keys())
     cmap = mpl.colormaps['plasma']
-    colors = cmap(np.linspace(0, 1, n_lines))
+    colors = cmap(np.linspace(0, 1, n_lines)[::-1])
 
     for i, key in enumerate(df.keys()[1:]):
         lbl = str(10 + i*10) + ' min'
@@ -317,14 +345,16 @@ def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     ax2.plot(bins, df[df.keys()[0]], color = 'k', alpha = 0.3, label = 'Background', lw = 1)
     
     ax.legend(fontsize = 8, ncol = cols, loc = loc)
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
-    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
-    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', width = 1, length = 2, bottom = True, left = True)
+    # ax.xaxis.set_minor_locator(AutoMinorLocator())
+    # ax.yaxis.set_minor_locator(AutoMinorLocator())
+    ax.tick_params(axis = 'both', labelsize = 8) # , which = 'major', direction = 'out', bottom = True, left = True
+
+    # ax2.yaxis.set_minor_locator(AutoMinorLocator())
+    ax2.tick_params(axis = 'y', labelsize = 8, labelcolor = 'dimgrey') # , which = 'major', direction = 'out', right = True
+    # ax2.tick_params(axis = 'y', which = 'minor', direction = 'out', width = 1, length = 2, right = True, labelcolor = 'dimgrey')
 
     ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
     ax2.set_ylabel('Background ' + axis_labels[1], color = 'dimgrey')
-    ax2.tick_params(axis='y', labelcolor = 'dimgrey')
 
 def plot_reference(ax, x_plot, data, keys, labels):
     # Plot a scatter plot of the two concentrations

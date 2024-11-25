@@ -171,15 +171,22 @@ def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestam
 
         filtered_time = pd.to_datetime(np.array(time[time_filter]))
 
-        new_df = pd.DataFrame({'Time': filtered_time})
-        new_df = new_df.set_index('Time')
+        new_df = pd.DataFrame({'Timestamp': filtered_time})
         
+        # Dictionary to collect new columns
+        new_columns = {}
+
         for key in concentration:
             conc = np.array(df[key])
             conc = pd.to_numeric(conc, errors='coerce')
             filtered_conc = conc[time_filter]
 
-            new_df[key] = filtered_conc
+            # Store the filtered data in the dictionary
+            new_columns[key] = filtered_conc
+
+        # Convert dictionary to DataFrame and concatenate it with `new_df`
+        new_df = pd.concat([new_df, pd.DataFrame(new_columns)], axis=1)
+        new_df = new_df.set_index('Timestamp')
 
         # Resample the data to bins 
         new_df = new_df.resample(interval).mean() 
@@ -196,12 +203,14 @@ def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
 
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
-
-    time = pd.to_datetime(df[timelabel])
+    if timelabel != None:
+        time = pd.to_datetime(df[timelabel])
+    else:
+        time = pd.to_datetime(df.index)
     time_filter = (time >= start_time) & (time <= end_time)
 
     for i, key in enumerate(df_keys):
-        conc = np.array(df[key].dropna())
+        conc = np.array(df[key])
         
         # Convert the concentration data to numeric, coercing errors
         conc = pd.to_numeric(conc, errors='coerce')
@@ -216,18 +225,20 @@ def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
 
     return mean, std, errors
 
-def calc_mass_conc(df, df_keys, bin_mid_points, rho):   # bin_cut_points,
-    # bin_widths = []
-    # for i, bin in enumerate(bin_cut_points[:-1]):
-    #     width = bin_cut_points[i+1] - bin
-    #     bin_widths.append(width)
-    
-    new_df = pd.DataFrame({'Time': df['Time']})
+def calc_mass_conc(df, df_keys, bin_mid_points, rho):
+    try:
+        new_df = pd.DataFrame({'Time': df['Time']})
+    except KeyError:
+        new_df = pd.DataFrame({'Time': df.index})
+
+    new_columns = {}    
     for i, key in enumerate(df_keys):
         # Ensure df[key] is numeric
-        df[key] = pd.to_numeric(df[key], errors='coerce')
+        df[key] = np.array(pd.to_numeric(df[key], errors='coerce'))
         
-        new_df[key] = (rho / 10**6) * (np.pi / 6) * bin_mid_points[i]**3 * df[key] * 10**6 # in ug * m**-3
+        new_columns[key] = (rho / 10**6) * (np.pi / 6) * bin_mid_points[i]**3 * df[key] * 10**6 # in ug * m**-3
+    # Convert dictionary to DataFrame and concatenate it with `new_df`
+    new_df = pd.concat([new_df, pd.DataFrame(new_columns)], axis=1)
 
     return new_df
 
@@ -266,4 +277,75 @@ def binned_mean(timestamps, dict_number, dict_mass, dict_keys, bins, start_point
             exp_mass = running_mean(df_mass, None, bins, 'Time', '10T', 10, timestamps[2][i])
             running_mass[new_key] = pd.concat([bg_mass, exp_mass])
 
-    return running_number, running_mass  
+    return running_number, running_mass
+
+def split_data_timestamps(df, timestamps, timelabel, concentration):
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1])
+
+    time = pd.to_datetime(df[timelabel])
+
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    filtered_time = pd.to_datetime(np.array(time[time_filter]))
+
+    new_df = pd.DataFrame({'Time': filtered_time})
+    # new_df = new_df.set_index('Time')
+    
+    for key in concentration:
+        conc = np.array(df[key])
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+
+        new_df[key] = filtered_conc
+
+    return new_df
+
+def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, large_Dp_keys, large_Dp_interval, timestamps, timelabel, running, round):
+    new_dict_number = {}
+    new_dict_mass = {}
+
+    for i, key in enumerate(small_Dp_keys):
+        small_df_keys = dict_small_Dp[key].keys()[small_Dp_interval[0]:small_Dp_interval[1]].to_list()
+        large_df_keys = dict_large_Dp[large_Dp_keys[i]].keys()[large_Dp_interval[0]:large_Dp_interval[1]].to_list()
+        name = 'Exp' + str(i+1)
+
+        if running:
+            df_small = running_mean(dict_small_Dp[key], None, small_df_keys, timelabel[0], '1T', 1, timestamps[i])
+            df_small_time = pd.DataFrame({'Time': pd.to_datetime(df_small.index)})
+            df_small = pd.concat([df_small, df_small_time], axis=1)
+            df_large = running_mean(dict_large_Dp[large_Dp_keys[i]], None, large_df_keys, timelabel[1], '1T', 1, timestamps[i])
+            df_large_time = pd.DataFrame({'Time': pd.to_datetime(df_large.index)})
+            df_large = pd.concat([df_large, df_large_time], axis=1)
+
+        if round:
+            dict_small_Dp[key][timelabel[0]] = pd.to_datetime(dict_small_Dp[key][timelabel[0]]).round('60s')
+            dict_large_Dp[large_Dp_keys[i]][timelabel[1]] = pd.to_datetime(dict_large_Dp[large_Dp_keys[i]][timelabel[1]]).round('60s')
+
+            df_small = split_data_timestamps(dict_small_Dp[key], timestamps[i], timelabel[0], small_df_keys)
+            df_large = split_data_timestamps(dict_large_Dp[large_Dp_keys[i]], timestamps[i], timelabel[1], large_df_keys)
+
+        small_df_floats = []
+        small_df_strings = []
+        for key in small_df_keys:
+            new_key = float(key) / 1000
+            small_df_floats.append(new_key)
+            small_df_strings.append(str(new_key))
+            df_small = df_small.rename(columns = {key: str(new_key)})
+        
+        large_df_floats = []
+        for key in large_df_keys:
+            large_df_floats.append(float(key))
+
+        merged_keys = small_df_strings + large_df_keys
+        merged_bin_mean = small_df_floats + large_df_floats
+
+        merged = pd.merge(df_small, df_large, on = 'Time')
+        merged = merged.reset_index()
+
+        merged_mass = calc_mass_conc(merged, merged_keys, merged_bin_mean, 7.86)
+
+        new_dict_number[name] = merged
+        new_dict_mass[name] = merged_mass
+
+    return new_dict_number, new_dict_mass, merged_keys, merged_bin_mean
