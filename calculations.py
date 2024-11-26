@@ -310,19 +310,27 @@ def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, l
         large_df_keys = dict_large_Dp[large_Dp_keys[i]].keys()[large_Dp_interval[0]:large_Dp_interval[1]].to_list()
         name = 'Exp' + str(i+1)
 
-        if running:
+        if round == False:
             df_small = running_mean(dict_small_Dp[key], None, small_df_keys, timelabel[0], '1T', 1, timestamps[i])
-            df_small_time = pd.DataFrame({'Time': pd.to_datetime(df_small.index)})
-            df_small = pd.concat([df_small, df_small_time], axis=1)
+            df_small = df_small.fillna(0)
+            df_small['Time'] = pd.to_datetime(df_small.index)
             df_large = running_mean(dict_large_Dp[large_Dp_keys[i]], None, large_df_keys, timelabel[1], '1T', 1, timestamps[i])
-            df_large_time = pd.DataFrame({'Time': pd.to_datetime(df_large.index)})
-            df_large = pd.concat([df_large, df_large_time], axis=1)
+            df_large = df_large.fillna(0)
+            df_large['Time'] = pd.to_datetime(df_large.index)
 
-        if round:
+        if running == False:
             dict_small_Dp[key][timelabel[0]] = pd.to_datetime(dict_small_Dp[key][timelabel[0]]).round('60s')
             dict_large_Dp[large_Dp_keys[i]][timelabel[1]] = pd.to_datetime(dict_large_Dp[large_Dp_keys[i]][timelabel[1]]).round('60s')
 
             df_small = split_data_timestamps(dict_small_Dp[key], timestamps[i], timelabel[0], small_df_keys)
+            df_large = split_data_timestamps(dict_large_Dp[large_Dp_keys[i]], timestamps[i], timelabel[1], large_df_keys)
+
+        if running and round:
+            df_small = running_mean(dict_small_Dp[key], None, small_df_keys, timelabel[0], '1T', 1, timestamps[i])
+            df_small = df_small.fillna(0)
+            df_small['Time'] = pd.to_datetime(df_small.index)
+
+            dict_large_Dp[large_Dp_keys[i]][timelabel[1]] = pd.to_datetime(dict_large_Dp[large_Dp_keys[i]][timelabel[1]]).round('60s')
             df_large = split_data_timestamps(dict_large_Dp[large_Dp_keys[i]], timestamps[i], timelabel[1], large_df_keys)
 
         small_df_floats = []
