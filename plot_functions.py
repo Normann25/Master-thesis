@@ -240,7 +240,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
         
     # Make the y-scal logarithmic and set a label
     ax[0].set_yscale("log")
-    ax[0].set_ylabel("Dp, nm")
+    ax[0].set_ylabel("Dp, $\mu$m")
 
     total_conc = new_df.iloc[:,1:].sum(axis=1)
     ax[1].plot(new_df['Time'], total_conc, lw = 1, color = 'r')
