@@ -326,10 +326,9 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
         ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
     
     else:
-        ax2 = 0
-        mean_mass = 0
+        ax2, mean_mass, error_mass = 0, 0, 0
     
-    return mean_number, mean_mass, ax, ax2
+    return mean_number, error_number, mean_mass, error_mass, ax, ax2
 
 def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     n_lines = len(df.keys())
