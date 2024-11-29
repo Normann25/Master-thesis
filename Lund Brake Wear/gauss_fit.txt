@@ -1,0 +1,64 @@
+# # Step 3: Combine initial guesses for peaks and shoulders
+    # initial_guess = []
+
+    # # Add guesses for peaks
+    # for i in range(len(peaks)):
+    #     initial_guess.extend([sigma_guess_peaks[i], mu_guess_peaks[i], A_guess_peaks[i]])
+
+    # # Add guesses for shoulders if detected
+    # for shoulder in shoulders:
+    #     shoulder_mu = np.mean(shoulder)  # Take the average of the shoulder
+    #     mu_guess_peaks = np.concatenate((mu_guess_peaks, [shoulder_mu]))
+
+    #     # Improved estimation for the amplitude of the shoulder
+    #     shoulder_center_idx = np.argmin(np.abs(x - shoulder_mu))  # Find the closest index to the shoulder's center
+    #     # shoulder_A = np.mean(y[shoulder_center_idx:shoulder_center_idx+1])  # Average of y-values around the shoulder center
+    #     shoulder_A = y[shoulder_center_idx]
+    #     # shoulder_A = np.max(y) * 0.2  # Set amplitude to a small fraction of peak
+    #     A_guess_peaks = np.concatenate((A_guess_peaks, [shoulder_A]))
+
+    #     # Improved estimation for the sigma of the shoulder based on the shoulder width
+    #     shoulder_sigma = (shoulder[1] - shoulder[0]) / 3  # Set sigma as the width of the shoulder
+    #     initial_guess.extend([shoulder_sigma, shoulder_mu, shoulder_A])
+
+    # print(f"Initial guess (length: {len(initial_guess)}): {initial_guess}")
+
+    # # Check if initial guess length matches 3 parameters for each peak/shoulder
+    # expected_params = 3 * (len(peaks) + len(shoulders))  # 3 parameters for each peak and shoulder
+    # if len(initial_guess) != expected_params:
+    #     raise ValueError(f"Initial guess length mismatch: Expected {expected_params} parameters, got {len(initial_guess)}.")
+
+    # # Step 4: Define fitting function for multiple Gaussians
+    # def fit_func(x, *params):
+    #     return params[2] * np.exp(-0.5 * ((x - params[1]) / params[0])**2) / (np.sqrt(2 * np.pi) * params[0])
+    
+    # # Step 5: Define chi-squared function for fitting
+    # def chi2_fit(*params):
+    #     y_fit = fit_func(x, *params)
+    #     chi2 = np.sum(((y - y_fit) / sy)**2)  # Use sy as error array
+    #     return chi2
+
+    # df = pd.DataFrame({'x fit': np.linspace(min(x), max(x), 1000)})
+    # for i in range(len(mu_guess_peaks)):
+    #     # Step 6: Fit the data using Minuit
+    #     try:
+    #         minuit_chi2 = Minuit(chi2_fit, *initial_guess[:3 + i*3])
+    #         minuit_chi2.limits = [(1e-3, None)] * len(initial_guess[:3 + i*3])  # Ensure no parameters are zero
+    #         minuit_chi2.migrad()  # Perform the minimization
+    #     except Exception as e:
+    #         print(f"Fitting failed: {e}")
+    #         return np.zeros_like(x), [], [], [], []
+
+    #     # Step 7: Extract the results
+    #     fitted_params = minuit_chi2.values
+    #     errors = minuit_chi2.errors
+
+    #     # Step 8: Calculate chi-squared value and probability
+    #     Nvar = len(fitted_params)
+    #     Ndof_fit = Npoints - Nvar
+    #     chi2_value = minuit_chi2.fval
+    #     Prob_value = stats.chi2.sf(chi2_value, Ndof_fit)
+
+    #     print(f"Chi2 value: {chi2_value:.1f}   Ndof = {Ndof_fit:.0f}    Prob(Chi2,Ndof) = {Prob_value:5.3f}")
+
+    #     df['Peak ' + str(i + 1)] = fit_func(df['x fit'], *fitted_params)
