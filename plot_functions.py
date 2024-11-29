@@ -330,6 +330,59 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
     
     return mean_number, error_number, mean_mass, error_mass, ax, ax2
 
+def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, inst_error, ymax):
+    new_dict_keys = ['Exp1', 'Exp2', 'Exp3', 'Exp4']
+    mean_conc = {}
+    axes = []
+    figs = []
+    ax_labels = ['Particle diameter / $\mu$m', 'dN / #/cm$^{3}$', 'dM / $\mu$g/m$^{3}$']
+
+    fig1, ax1 = plt.subplots(2, 2, figsize = (8, 6))
+    figs.append(fig1)
+
+    for i, key in enumerate(dict_keys):
+        if i == 0:
+            ax = ax1[0][0]
+        if i == 1:
+            ax = ax1[0][1]
+        if i == 2:
+            ax = ax1[1][0]
+        if i == 3:
+            ax = ax1[1][1]
+
+        number, error_number, mass, error_mass, ax_n, ax_m = plot_bin_mean(ax, timestamps[i], dict_number[key], dict_mass[key], df_keys, 'Time', bins, ['tab:blue', 'red'], inst_error, ax_labels, True, None)
+        axes.append([ax_n, ax_m])
+        mean_conc[new_dict_keys[i]] = pd.DataFrame({'Diameter': np.array(bins), 'number': number, 'error number': error_number, 'mass': mass, 'error mass': error_mass})
+
+        ax_n.set_ylim(0, ymax[0])
+        ax_m.set_ylim(0, ymax[1])
+        
+        title = 'Experiment ' + str(i + 1)
+        ax.set_title(title)
+
+    sublabels = ['a', 'b', 'c', 'd']
+    for ax, l in zip(ax1.flatten(), sublabels):
+        ax.text(0.02, 0.92, l, transform = ax.transAxes, fontsize = 10)
+    
+    fig1.tight_layout()
+    
+    fig2, ax2 = plt.subplots(1,2, figsize = (6.3, 3))  
+    axes.append([ax2[0], ax2[1]])
+    figs.append(fig2)
+    labels = ['2 m/s - LM', '4 m/s - LM', '2 m/s - NAO', '4 m/s - NAO']
+
+    for key, label in zip(new_dict_keys, labels):
+        ax2[0].plot(mean_conc[key]['Diameter'], mean_conc[key]['number'], label = label)
+        ax2[0].legend(fontsize = 8)
+        ax2[0].set(xlabel = ax_labels[0], ylabel = ax_labels[1], xscale='log', title = 'Particle number')
+        ax2[1].plot(mean_conc[key]['Diameter'], mean_conc[key]['mass'], label = label)
+        ax2[1].legend(fontsize = 8)
+        ax2[1].set(xlabel = ax_labels[0], ylabel = ax_labels[2], xscale = 'log', title = 'Particle mass')
+
+    fig2.tight_layout()
+
+    return mean_conc, axes, figs
+
 def plot_running_mean(ax, df, bins, cols, axis_labels, loc):
     n_lines = len(df.keys())
     cmap = mpl.colormaps['plasma']
