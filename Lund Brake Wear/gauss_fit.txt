@@ -62,3 +62,136 @@
     #     print(f"Chi2 value: {chi2_value:.1f}   Ndof = {Ndof_fit:.0f}    Prob(Chi2,Ndof) = {Prob_value:5.3f}")
 
     #     df['Peak ' + str(i + 1)] = fit_func(df['x fit'], *fitted_params)
+
+
+
+Fit sum of Gaussians:
+def detect_shoulders(x, y, threshold=0.1):
+    """Detect shoulders based on the second derivative (curvature)."""
+    
+    # Calculate first and second derivatives
+    dy = np.diff(y)  # First derivative (slope)
+    d2y = np.diff(dy)  # Second derivative (curvature)
+
+    # Initialize shoulder regions
+    shoulders = []
+    
+    # Iterate through the data to find shoulder-like features
+    for i in range(1, len(d2y) - 1):
+        # Look for inflection points where the second derivative changes sign
+        if d2y[i - 1] > 0 and d2y[i] < 0:  # Peak of curvature (turning from up to down)
+            # Check if the slope is gradually changing (shoulder)
+            if abs(dy[i]) < threshold:
+                # Record the start and end of the shoulder region
+                shoulder_start = x[i - 1]
+                shoulder_end = x[i + 1]
+                shoulders.append((shoulder_start, shoulder_end))
+    
+    return shoulders
+
+def find_gauss_peaks(x, y, sy):
+    x, y, sy = np.array(x), np.array(y), np.array(sy)
+
+    Npoints = len(y)
+
+    # Step 1: Detect peaks
+    peaks, _ = find_peaks(y)    # , prominence=1e-2, height=1e-3)
+    if len(peaks) == 0:
+        print("No peaks detected. Adjust parameters.")
+        return np.zeros_like(x), [], [], [], []  # Return empty results if no peaks
+
+    mu_guess_peaks = x[peaks]
+    A_guess_peaks = y[peaks]
+    sigma_guess_peaks = [0.1] * len(peaks)  # Uniform width guess for peaks
+
+    # Step 2: Detect shoulders using second derivative
+    shoulders = detect_shoulders(x, y)
+
+    # Step 3: Combine initial guesses for peaks and shoulders
+    initial_guess = []
+
+    # Add guesses for peaks
+    for i in range(len(peaks)):
+        initial_guess.extend([sigma_guess_peaks[i], mu_guess_peaks[i], A_guess_peaks[i]])
+
+    # Add guesses for shoulders if detected
+    for shoulder in shoulders:
+        shoulder_mu = np.mean(shoulder)  # Take the average of the shoulder
+        mu_guess_peaks = np.concatenate((mu_guess_peaks, [shoulder_mu]))
+
+        # Improved estimation for the amplitude of the shoulder
+        shoulder_center_idx = np.argmin(np.abs(x - shoulder_mu))  # Find the closest index to the shoulder's center
+        # shoulder_A = np.mean(y[shoulder_center_idx:shoulder_center_idx+1])  # Average of y-values around the shoulder center
+        shoulder_A = y[shoulder_center_idx]
+        # shoulder_A = np.max(y) * 0.2  # Set amplitude to a small fraction of peak
+        A_guess_peaks = np.concatenate((A_guess_peaks, [shoulder_A]))
+
+        # Improved estimation for the sigma of the shoulder based on the shoulder width
+        shoulder_sigma = (shoulder[1] - shoulder[0]) / 3  # Set sigma as the width of the shoulder
+        initial_guess.extend([shoulder_sigma, shoulder_mu, shoulder_A])
+
+    print(f"Initial guess (length: {len(initial_guess)}): {initial_guess}")
+
+    # Check if initial guess length matches 3 parameters for each peak/shoulder
+    expected_params = 3 * (len(peaks) + len(shoulders))  # 3 parameters for each peak and shoulder
+    if len(initial_guess) != expected_params:
+        raise ValueError(f"Initial guess length mismatch: Expected {expected_params} parameters, got {len(initial_guess)}.")
+
+    # Step 4: Define fitting function for multiple Gaussians
+    def fit_func(x, *params):
+        N = len(params) // 3
+        gauss_sum = sum(
+            params[3*i+2] * np.exp(-0.5 * ((x - params[3*i+1]) / params[3*i])**2) / (np.sqrt(2 * np.pi) * params[3*i])
+            for i in range(N)
+        )
+        return gauss_sum
+
+    # Step 5: Define chi-squared function for fitting
+    def chi2_fit(*params):
+        y_fit = fit_func(x, *params)
+        chi2 = np.sum(((y - y_fit) / sy)**2)  # Use sy as error array
+        return chi2
+
+    # Step 6: Fit the data using Minuit
+    try:
+        minuit_chi2 = Minuit(chi2_fit, *initial_guess)
+        minuit_chi2.limits = [(1e-3, None)] * len(initial_guess)  # Ensure no parameters are zero
+        minuit_chi2.migrad()  # Perform the minimization
+    except Exception as e:
+        print(f"Fitting failed: {e}")
+        return np.zeros_like(x), [], [], [], []
+
+    # Step 7: Extract the results
+    fitted_params = minuit_chi2.values
+    errors = minuit_chi2.errors
+
+    # Step 8: Calculate chi-squared value and probability
+    Nvar = len(fitted_params)
+    Ndof_fit = Npoints - Nvar
+    chi2_value = minuit_chi2.fval
+    Prob_value = stats.chi2.sf(chi2_value, Ndof_fit)
+
+    print(f"Chi2 value: {chi2_value:.1f}   Ndof = {Ndof_fit:.0f}    Prob(Chi2,Ndof) = {Prob_value:5.3f}")
+
+    x_fit = np.linspace(min(x), max(x), 1000)
+    y_fit = fit_func(x_fit, *fitted_params)
+
+    return x_fit, y_fit, mu_guess_peaks, A_guess_peaks, fitted_params, errors
+
+def plot_gauss_fit(ax, x, y, sy, datatype):
+
+    x_fit, y_fit, peak_positions, peak_heights, fitted_params, errors = find_gauss_peaks(x, y, sy)
+    
+    # Plot data and fit
+    # ax.plot(x, y, label="Data")
+    ax.errorbar(x, y, sy, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, label = 'Data', color = 'tab:blue')
+    ax.plot(x_fit, y_fit, label="Fit", linestyle="--", color = 'k', zorder = -10)
+    ax.scatter(peak_positions, peak_heights, color="red", label="Detected Peaks", marker = 'x', zorder = 10)
+    ax.legend(fontsize = 8)
+    ax.set(xscale='log', xlabel='Particle diameter / $\mu$m')
+    if datatype == 'number':
+        ax.set_ylabel('dN / #/cm$^{3}$')
+    if datatype == 'mass':
+        ax.set_ylabel('dM / $\mu$/m$^{3}$')
+
+    return ax, y_fit
