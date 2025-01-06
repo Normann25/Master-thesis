@@ -72,7 +72,7 @@ def read_data(path, parent_path, time_label, hour):
     
     return data_dict
 
-def read_csv_BC(path, parent_path):
+def read_csv_BC(path, parent_path, hr):
     parentPath = os.path.abspath(parent_path)
     if parentPath not in sys.path:
         sys.path.insert(0, parentPath)
@@ -93,7 +93,7 @@ def read_csv_BC(path, parent_path):
                 
                 df['Time'] = df[['Date local (yyyy/MM/dd)', 'Time local (hh:mm:ss)']].agg(' '.join, axis=1)
 
-                df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")
+                df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")  + pd.Timedelta(hours = hr)
 
                 # new_df = pd.DataFrame()
                 # columns = ['Time', 'Sample temp (C)', 'Sample RH (%)', 'UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']

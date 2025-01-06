@@ -107,6 +107,8 @@ def ma_single_timeseries(ax, df, screening, timestamps, loc):
     # Rotate and format date labels
     plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
 
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
+
     ax.set_xlabel('Time [HH:MM]', fontsize = 9)
     ax.set_ylabel('Concentration / $\mu$g/m$^{3}$', fontsize = 9)
 
