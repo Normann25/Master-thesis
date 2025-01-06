@@ -226,7 +226,7 @@ def read_SMPS(path, parent_path, hour):
 
     return data_dict
 
-def read_OPS(path, parent_path): # , V_chamber):
+def read_OPS(path, parent_path, hr): # , V_chamber):
     new_dict = {}
 
     ParentPath = os.path.abspath(parent_path)
@@ -255,22 +255,22 @@ def read_OPS(path, parent_path): # , V_chamber):
                 
                 with open(os.path.join(path, file), 'r') as f:
                     df = pd.read_table(f, sep = ',', skiprows = 37)
+                    df = df.drop(['Alarms', 'Errors', df.keys()[-1]], axis = 1)
+                    df = df.dropna()
         
                 Timestamps = []
                 for time in df['Elapsed Time [s]']:
-                    timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time)
+                    timestamp = pd.to_datetime(new_time, format="%d/%m/%Y %H:%M:%S") + pd.Timedelta(seconds = time) + pd.Timedelta(hours = hr)
                     Timestamps.append(timestamp)
                 df['Time'] = Timestamps
 
                 for key in df.keys()[1:18]:
-                    C_i, ts, td = np.array(df[key]), np.array(df['Elapsed Time [s]']), np.array(df['Deadtime (s)'])
+                    C_i, ts, td = np.array(df[key]), np.zeros(len(df['Elapsed Time [s]'])) + df['Elapsed Time [s]'][0], np.array(df['Deadtime (s)'])
 
                     N_i = C_i / (16.67 * (ts - DCT * td))
                     df[key] = N_i # / V_chamber
 
                 df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
-                
-                df = df.drop(['Alarms', 'Errors'], axis = 1)
 
                 new_dict[name] = df
         
