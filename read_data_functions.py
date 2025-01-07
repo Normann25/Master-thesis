@@ -28,6 +28,32 @@ def read_txt(path, parent_path, file_names, separation, skip):
     
     return new_dict
 
+def read_csv(path, parent_path, timelabel, skip, hour):
+    ParentPath = os.path.abspath(parent_path)
+    if ParentPath not in sys.path:
+        sys.path.insert(0, ParentPath)
+
+    files = os.listdir(path)
+    data_dict = {}
+
+    for file in files:
+        if '.csv' or '.CSV' in file:
+            separations = [',', ';']
+            decimal_sep = ['.', ',']
+            name = file.split('.')[0]
+            for sep, dec in zip(separations, decimal_sep):
+                try:
+                    with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
+                        df = pd.read_csv(f, sep = sep, decimal = dec, skiprows = skip)
+
+                    df['Time'] = pd.to_datetime(df[timelabel]) + pd.Timedelta(hours=hour)
+                    data_dict[name] = df
+
+                except KeyError:
+                    print(f'Failed to read file with separation: {sep}')
+
+    return data_dict
+
 def read_txt_acsm(path, parent_path, file_names, separation, hour):
     new_dict = {}
     data_dict = read_txt(path, parent_path, file_names, separation, None)
@@ -95,12 +121,6 @@ def read_csv_BC(path, parent_path, hr):
 
                 df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")  + pd.Timedelta(hours = hr)
 
-                # new_df = pd.DataFrame()
-                # columns = ['Time', 'Sample temp (C)', 'Sample RH (%)', 'UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
-                # for col in columns:
-                #     new_df[col] = df[col]
-
-                # new_df = new_df.dropna()
                 for key in df.keys():
                     if 'BCc' in key:
                         df[key][df[key] < 0] = 0
