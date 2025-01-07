@@ -351,7 +351,7 @@ def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, l
         merged = pd.merge(df_small, df_large, on = 'Time')
         merged = merged.reset_index()
 
-        merged_mass = calc_mass_conc(merged, merged_keys, merged_bin_mean, 7.86)
+        merged_mass = calc_mass_conc(merged, merged_keys, merged_bin_mean, 1.2)
 
         new_dict_number[name] = merged
         new_dict_mass[name] = merged_mass
