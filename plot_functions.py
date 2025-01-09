@@ -10,6 +10,7 @@ from datetime import datetime
 import matplotlib.dates as mdates
 import linecache
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 sys.path.append('..')
 from calculations import *
 #%%
@@ -33,6 +34,36 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
         ax[i].set_title(dict_key, fontsize = 9)
     fig.supxlabel('Time [HH:MM]', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
+
+def plot_MS(ax, df, conc, width, ttl):
+    ax.bar(df['m/z'], df[conc], width)
+
+    ax.set(xlabel = 'm/z', ylabel = 'Intensity', title = ttl)
+
+def plot_MS_wInset(ax, data_dict, dict_keys, conc, height, loc, bb2a, widths, titles):
+    for i, key in enumerate(dict_keys):
+        df = data_dict[key]
+        zero_mask = df[conc] >= 0
+        df = df[zero_mask]
+
+        plot_MS(ax[i], df, conc, widths[0], titles[i])
+        
+        ax[i].set_xlim(0, 300)
+
+        inset_ax = inset_axes(ax[i],
+                            width = "60%", # width = % of parent_bbox
+                            height = height, # height : 1 inch
+                            loc = loc,
+                            bbox_to_anchor = bb2a,
+                            bbox_transform = ax[i].transAxes) # placement in figure
+        
+        mask = df['m/z'] >= 100
+
+        inset_ax.bar(df['m/z'][mask], df[conc][mask], widths[1])
+
+        inset_ax.set(xlabel = None, ylabel = None, xlim = (100, 300))
+
+
     
 def discmini_single_timeseries(ax, df, n):
     p1, = ax.plot(df['Time'], df['Number'], lw = 1, label = 'Number concentration', color = 'tab:blue')
