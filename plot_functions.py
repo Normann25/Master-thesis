@@ -35,6 +35,39 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     fig.supxlabel('Time [HH:MM]', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
 
+def plot_inset(ax, height, loc, bb2a, plot_width, xdata, ydata, width, bar, timeseries, timestamps):
+    inset_ax = inset_axes(ax,
+                            width = plot_width, # width = % of parent_bbox
+                            height = height, # height : 1 inch
+                            loc = loc,
+                            bbox_to_anchor = bb2a,
+                            bbox_transform = ax.transAxes) # placement in figure
+    if bar:
+        inset_ax.bar(xdata, ydata, width)
+    
+    if timeseries:
+        start_time = pd.to_datetime(timestamps[0])
+        end_time = pd.to_datetime(timestamps[1])
+        time = pd.to_datetime(xdata)
+        time_filter = (time >= start_time) & (time <= end_time)
+
+        filtered_time = np.array(time[time_filter])
+        conc = np.array(ydata)
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+        inset_ax.plot(filtered_time, filtered_conc)
+
+        # Set the x-axis major formatter to a date format
+        inset_ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
+        inset_ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        # Rotate and format date labels
+        plt.setp(inset_ax.xaxis.get_majorticklabels(), size = 8)
+
+    inset_ax.set(xlabel = None, ylabel = None)
+
+    return inset_ax
+    
 def plot_MS(ax, df, conc, width, ttl):
     ax.bar(df['m/z'], df[conc], width)
 
@@ -50,18 +83,10 @@ def plot_MS_wInset(ax, data_dict, dict_keys, conc, height, loc, bb2a, widths, ti
         
         ax[i].set_xlim(0, 300)
 
-        inset_ax = inset_axes(ax[i],
-                            width = "60%", # width = % of parent_bbox
-                            height = height, # height : 1 inch
-                            loc = loc,
-                            bbox_to_anchor = bb2a,
-                            bbox_transform = ax[i].transAxes) # placement in figure
-        
         mask = df['m/z'] >= 100
+        inset_ax = plot_inset(ax[i], height, loc, bb2a, '60%', df['m/z'][mask], df[conc][mask], widths[1], True, False, None)
 
-        inset_ax.bar(df['m/z'][mask], df[conc][mask], widths[1])
-
-        inset_ax.set(xlabel = None, ylabel = None, xlim = (100, 300))
+        inset_ax.set(xlim = (100, 300))
 
 
     
