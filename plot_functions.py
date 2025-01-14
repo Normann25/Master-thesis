@@ -393,7 +393,7 @@ def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, 
     mean_conc = {}
     axes = []
     figs = []
-    ax_labels = ['Particle diameter / $\mu$m', 'dN / #/cm$^{3}$', 'dM / $\mu$g/m$^{3}$']
+    ax_labels = ['Particle diameter / $\mu$m', 'Number / #/cm$^{3}$', 'Mass / $\mu$g/m$^{3}$']
 
     fig1, ax1 = plt.subplots(2, 2, figsize = (8, 6))
     figs.append(fig1)
