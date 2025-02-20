@@ -177,27 +177,26 @@ def read_LCS_data(path, parent_path, time_label, hour):
     data_dict = {}
 
     for file in files:
-        if '.CSV' in file:
-            name = file.split('.')[0]
-            with open(os.path.join(path, file)) as f:
-                df = pd.read_csv(f, sep=';', decimal=',')
-        if '.csv' in file:
-            name = file.split('.')[0]
-            with open(os.path.join(path, file)) as f:
-                df = pd.read_csv(f, sep=';', decimal='.')
-                    
-        # Process the timestamp column
-        df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
-        
-        # Convert additional columns to numeric if they exist
-        if 'SPS30_PM2.5' in df.columns:
-            df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
-        
-        # Create a timestamp with timezone adjustment
-        df['timestamp'] = df[time_label] + pd.Timedelta(hours=hour)
+        if 'DG' in file:
+            separations = [',', ';']
+            decimals = ['.', ',']
+            for sep, dec in zip(separations, decimals):
+                try:
+                    with open(os.path.join(path, file)) as f:
+                        df = pd.read_csv(f, sep=sep, decimal=dec)
 
-        # Store the DataFrame in the data_dict with its name as key
-        data_dict[name] = df
+                    # Process the timestamp column
+                    df['Time'] = format_timestamps(df[time_label], "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S")
+                    df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
+
+                    df['Date'] = pd.to_datetime(df[time_label]).dt.date
+                    for date in df['Date'].unique():
+                        mask = df['Date'] == date
+                        new_df = df[mask].reset_index()
+                        data_dict[str(date)] = new_df.drop(['index', 'Unnamed: 0', time_label, 'Date'], axis = 1)
+
+                except KeyError:
+                    print(f'Failed to read file with separation: {sep}')
 
     return data_dict
 
