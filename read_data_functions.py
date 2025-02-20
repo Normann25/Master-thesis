@@ -44,7 +44,10 @@ def read_txt_acsm(path, parent_path, file_names, separation, hour):
 def format_timestamps(timestamps, old_format, new_format):
     new_timestamps = []
     for timestamp in timestamps:
-        old_datetime = datetime.strptime(timestamp, old_format)
+        try:
+            old_datetime = datetime.strptime(timestamp, old_format)
+        except TypeError:
+            old_datetime = datetime.strptime(str(timestamp), old_format)
         new_datetime = old_datetime.strftime(new_format)
         new_timestamps.append(new_datetime)
     return pd.to_datetime(new_timestamps, format=new_format)
