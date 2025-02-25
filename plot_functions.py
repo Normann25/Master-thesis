@@ -455,12 +455,11 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bin_me
     
     return mean_number, error_number, mean_mass, error_mass, ax, ax2
 
-def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, inst_error, ymax):
+def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, bin_edges, inst_error, ymax):
     new_dict_keys = ['Exp1', 'Exp2', 'Exp3', 'Exp4']
     mean_conc = {}
     axes = []
     figs = []
-    ax_labels = ['Particle diameter / $\mu$m', 'Number / #/cm$^{3}$', 'Mass / $\mu$g/m$^{3}$']
 
     fig1, ax1 = plt.subplots(2, 2, figsize = (8, 6))
     figs.append(fig1)
@@ -475,7 +474,7 @@ def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, 
         if i == 3:
             ax = ax1[1][1]
 
-        number, error_number, mass, error_mass, ax_n, ax_m = plot_bin_mean(ax, timestamps[i], dict_number[key], dict_mass[key], df_keys, 'Time', bins, ['tab:blue', 'red'], inst_error, ax_labels, True, None)
+        number, error_number, mass, error_mass, ax_n, ax_m = plot_bin_mean(ax, timestamps[i], dict_number[key], dict_mass[key], df_keys, 'Time', bins, bin_edges, inst_error, None, True)
         axes.append([ax_n, ax_m])
         mean_conc[new_dict_keys[i]] = pd.DataFrame({'Diameter': np.array(bins), 'number': number, 'error number': error_number, 'mass': mass, 'error mass': error_mass})
 
@@ -499,10 +498,10 @@ def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, 
     for key, label in zip(new_dict_keys, labels):
         ax2[0].plot(mean_conc[key]['Diameter'], mean_conc[key]['number'], label = label)
         ax2[0].legend(fontsize = 8)
-        ax2[0].set(xlabel = ax_labels[0], ylabel = ax_labels[1], xscale='log', title = 'Particle number')
+        ax2[0].set(xlabel = 'Particle diameter / $\mu$m', ylabel = 'dN/dlogDp, cm$^{-3}$', xscale='log', title = 'Particle number')
         ax2[1].plot(mean_conc[key]['Diameter'], mean_conc[key]['mass'], label = label)
         ax2[1].legend(fontsize = 8)
-        ax2[1].set(xlabel = ax_labels[0], ylabel = ax_labels[2], xscale = 'log', title = 'Particle mass')
+        ax2[1].set(xlabel = 'Particle diameter / $\mu$m', ylabel = 'dM/dlogDp, $\mu$g/m$^{3}$', xscale = 'log', title = 'Particle mass')
 
     fig2.tight_layout()
 
