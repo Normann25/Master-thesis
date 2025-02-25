@@ -216,7 +216,7 @@ def bin_mean(timestamps, df, df_keys, timelabel, inst_error):
         conc = pd.to_numeric(conc, errors='coerce')
         filtered_conc = conc[time_filter]
         mean[i] += filtered_conc.mean()
-        std[i] += filtered_conc.std()
+        std[i] += filtered_conc.std() / np.sqrt(len(filtered_conc))
     
     if inst_error != None:
         errors = mean * inst_error

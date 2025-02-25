@@ -379,36 +379,48 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
         ax1.tick_params(axis="y",which="both",direction='out')
         ax2.tick_params(axis="y",which="both",direction='out')
 
-def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass, cut_point):
+def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bin_means, bin_edges, inst_error, cut_point, mass):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
+
+    if bin_edges != None:
+        dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
+        mean_number=mean_number/dlogDp
+        std_number=std_number/dlogDp
+        error_number=error_number/dlogDp
 
     min_std_number = [m - std for m, std in zip(mean_number, std_number)]
     max_std_number = [m + std for m, std in zip(mean_number, std_number)]
     abs_error_number = [abs(error) for error in error_number]
 
     if cut_point == None:
-        ax.fill_between(bins, min_std_number, max_std_number, alpha=0.2, color=clr[0], linewidth=0)
-        ax.errorbar(bins, mean_number, abs_error_number, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
+        ax.fill_between(bin_means, min_std_number, max_std_number, alpha=0.2, color='tab:blue', linewidth=0)
+        ax.errorbar(bin_means, mean_number, abs_error_number, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color='tab:blue', lw = 1.2)
     else:
-        df_number = pd.DataFrame({'Bin mean': bins, 'Concentration': mean_number, 'Std min': min_std_number, 'Std max': max_std_number, 'Error': abs_error_number})
+        df_number = pd.DataFrame({'Bin mean': bin_means, 'Concentration': mean_number, 'Std min': min_std_number, 'Std max': max_std_number, 'Error': abs_error_number})
         
         lower_cut = df_number['Bin mean'] < cut_point
         upper_cut = df_number['Bin mean'] > cut_point
 
-        ax.fill_between(df_number['Bin mean'][lower_cut], df_number['Std min'][lower_cut], df_number['Std max'][lower_cut], alpha=0.2, color=clr[0], linewidth=0)
-        ax.errorbar(df_number['Bin mean'][lower_cut], df_number['Concentration'][lower_cut], df_number['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
+        ax.fill_between(df_number['Bin mean'][lower_cut], df_number['Std min'][lower_cut], df_number['Std max'][lower_cut], alpha=0.2, color='tab:blue', linewidth=0)
+        ax.errorbar(df_number['Bin mean'][lower_cut], df_number['Concentration'][lower_cut], df_number['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color='tab:blue', lw = 1.2)
 
-        ax.fill_between(df_number['Bin mean'][upper_cut], df_number['Std min'][upper_cut], df_number['Std max'][upper_cut], alpha=0.2, color=clr[0], linewidth=0)
-        ax.errorbar(df_number['Bin mean'][upper_cut], df_number['Concentration'][upper_cut], df_number['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[0], lw = 1.2)
+        ax.fill_between(df_number['Bin mean'][upper_cut], df_number['Std min'][upper_cut], df_number['Std max'][upper_cut], alpha=0.2, color='tab:blue', linewidth=0)
+        ax.errorbar(df_number['Bin mean'][upper_cut], df_number['Concentration'][upper_cut], df_number['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color='tab:blue', lw = 1.2)
 
     # Explicitly set ylabel color for primary axis
-    ax.tick_params(axis = 'y', labelcolor=clr[0])
-    ax.set_ylabel(axis_labels[1], color=clr[0])
+    ax.tick_params(axis = 'y', labelcolor='tab:blue')
+    ax.set_ylabel('dN/dlogDp, cm$^{-3}$', color='tab:blue')
 
-    ax.set(xlabel=axis_labels[0], xscale='log')
+    ax.set(xlabel='Particle diameter / $\mu$m', xscale='log')
 
-    if mass == True:
+    if mass:
         mean_mass, std_mass, error_mass = bin_mean(timestamps, df_mass, df_keys, timelabel, inst_error)
+
+        if bin_edges != None:
+            dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
+            mean_mass=mean_mass/dlogDp
+            std_mass=std_mass/dlogDp
+            error_mass=error_mass/dlogDp
 
         min_std_mass = [m - std for m, std in zip(mean_mass, std_mass)]
         max_std_mass = [m + std for m, std in zip(mean_mass, std_mass)]
@@ -419,24 +431,24 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, 
         
         # Plotting for the mass concentration
         if cut_point == None:
-            ax2.fill_between(bins, min_std_mass, max_std_mass, alpha=0.2, color=clr[1], linewidth=0)
-            ax2.errorbar(bins, mean_mass, abs_error_mass, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+            ax2.fill_between(bin_means, min_std_mass, max_std_mass, alpha=0.2, color='red', linewidth=0)
+            ax2.errorbar(bin_means, mean_mass, abs_error_mass, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color='red', lw = 1.2)
         else:
-            df_mass = pd.DataFrame({'Bin mean': bins, 'Concentration': mean_mass, 'Std min': min_std_mass, 'Std max': max_std_mass, 'Error': abs_error_mass})
+            df_mass = pd.DataFrame({'Bin mean': bin_means, 'Concentration': mean_mass, 'Std min': min_std_mass, 'Std max': max_std_mass, 'Error': abs_error_mass})
             
             lower_cut = df_mass['Bin mean'] < cut_point
             upper_cut = df_mass['Bin mean'] > cut_point
 
-            ax2.fill_between(df_mass['Bin mean'][lower_cut], df_mass['Std min'][lower_cut], df_mass['Std max'][lower_cut], alpha=0.2, color=clr[1], linewidth=0)
-            ax2.errorbar(df_mass['Bin mean'][lower_cut], df_mass['Concentration'][lower_cut], df_mass['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+            ax2.fill_between(df_mass['Bin mean'][lower_cut], df_mass['Std min'][lower_cut], df_mass['Std max'][lower_cut], alpha=0.2, color='red', linewidth=0)
+            ax2.errorbar(df_mass['Bin mean'][lower_cut], df_mass['Concentration'][lower_cut], df_mass['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color='red', lw = 1.2)
 
-            ax2.fill_between(df_mass['Bin mean'][upper_cut], df_mass['Std min'][upper_cut], df_mass['Std max'][upper_cut], alpha=0.2, color=clr[1], linewidth=0)
-            ax2.errorbar(df_mass['Bin mean'][upper_cut], df_mass['Concentration'][upper_cut], df_mass['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=clr[1], lw = 1.2)
+            ax2.fill_between(df_mass['Bin mean'][upper_cut], df_mass['Std min'][upper_cut], df_mass['Std max'][upper_cut], alpha=0.2, color='red', linewidth=0)
+            ax2.errorbar(df_mass['Bin mean'][upper_cut], df_mass['Concentration'][upper_cut], df_mass['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color='red', lw = 1.2)
 
-        ax2.tick_params(axis = 'y', labelcolor=clr[1])
+        ax2.tick_params(axis = 'y', labelcolor='red')
 
         # Explicitly set ylabel color for secondary axis
-        ax2.set_ylabel(axis_labels[2], color=clr[1])  # Use axis_labels[2] for clarity
+        ax2.set_ylabel('dM/dlogDp, $\mu$g/m$^{3}$', color='red')  # Use axis_labels[2] for clarity
     
     else:
         ax2, mean_mass, error_mass = 0, 0, 0
