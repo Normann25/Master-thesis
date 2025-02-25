@@ -281,7 +281,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
         # ax.hlines(np.array([0.1, 2.5]), np.array([new_time[0], new_time[0]]), np.array([new_time[-1], new_time[-1]]), colors = 'white', linestyles = '--')
 
         if cutpoint != None:
-            ax.hlines(cutpoint[0], new_time[0], new_time[-1], colors = 'white', linestyles = '--')
+            ax.hlines(cutpoint, new_time[0], new_time[-1], colors = 'white', linestyles = '--')
             # ax.text(cutpoint[0] - 0.1*cutpoint[0], new_time[10], cutpoint[1], fontsize = 9, color = 'white')
             # ax.text(cutpoint[0] + 0.1*cutpoint[0], new_time[10], cutpoint[2], fontsize = 9, color = 'white')
 
