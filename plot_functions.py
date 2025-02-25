@@ -254,75 +254,130 @@ def partector_single_timeseries(ax, df, timestamps, loc):
     ax.set_xlabel('Time [HH:MM]', fontsize = 9)
     ax.set_ylabel('LDSA / $\mu$m$^{2}$/cm$^{3}$', fontsize = 9)
 
-def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps):
+def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, normed, cutpoint):
 
+    def plot_heatmap(ax, df, time, bin_edges, cutpoint):
+        data = np.array(df[df.keys()[1:]])
+
+        if normed == False:
+            dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
+            data=data/dlogDp
+
+        # Set the upper and/or lower limit of the color scale based on input
+        y_min = np.nanmin(data)
+        y_max = np.nanmax(data)
+
+        # Generate an extra time bin, which is needed for the meshgrid
+        dt = time[1]-time[0]
+        new_time = time - dt
+        new_time = np.append(new_time, new_time[-1]+dt)
+
+        # generate 2d meshgrid for the x, y, and z data of the 3D color plot
+        y, x = np.meshgrid(bin_edges, new_time)
+
+        # Fill the generated mesh with particle concentration data
+        p1 = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
+
+        # ax.hlines(np.array([0.1, 2.5]), np.array([new_time[0], new_time[0]]), np.array([new_time[-1], new_time[-1]]), colors = 'white', linestyles = '--')
+
+        if cutpoint != None:
+            ax.hlines(cutpoint[0], new_time[0], new_time[-1], colors = 'white', linestyles = '--')
+            # ax.text(cutpoint[0] - 0.1*cutpoint[0], new_time[10], cutpoint[1], fontsize = 9, color = 'white')
+            # ax.text(cutpoint[0] + 0.1*cutpoint[0], new_time[10], cutpoint[2], fontsize = 9, color = 'white')
+
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
+        ax.set_xlabel("Time, HH:MM")
+        plt.subplots_adjust(hspace=0.05)
+            
+        # Make the y-scal logarithmic and set a label
+        ax.set_yscale("log")
+        ax.set_ylabel("Dp, $\mu$m")
+        return ax, p1
+    
+    def plot_total(ax, df):
+        total_conc = df.iloc[:,1:].sum(axis=1)
+        ax.plot(df['Time'], total_conc, lw = 1, color = 'r')
+
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
+        ax.set_xlabel("Time, HH:MM")
+        plt.subplots_adjust(hspace=0.05)
+        return ax
+    
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
 
-    time = pd.to_datetime(df['Time'])
+    if datatype == 'number and mass':
+        df_number, df_mass = df[0], df[1]
 
-    time_filter = (time >= start_time) & (time <= end_time)
+        time = pd.to_datetime(df_number['Time'])
 
-    filtered_time = np.array(time[time_filter])
+        time_filter = (time >= start_time) & (time <= end_time)
 
-    new_df = pd.DataFrame({'Time': filtered_time})
+        filtered_time = np.array(time[time_filter])
 
-    for key in df_keys:
-        conc = np.array(df[key])
-        conc = pd.to_numeric(conc, errors='coerce')
-        filtered_conc = conc[time_filter]
+        new_df_number, new_df_mass = pd.DataFrame({'Time': filtered_time}), pd.DataFrame({'Time': filtered_time})
 
-        new_df[key] = filtered_conc
+        for key in df_keys:
+            conc_number, conc_mass = np.array(df_number[key]), np.array(df_mass[key])
+            conc_number, conc_mass = pd.to_numeric(conc_number, errors='coerce'), pd.to_numeric(conc_mass, errors='coerce')
+            filtered_number, filtered_mass = conc_number[time_filter], conc_mass[time_filter]
 
-    data = np.array(new_df[new_df.keys()[1:]])
-
-    # Set the upper and/or lower limit of the color scale based on input
-    y_min = np.nanmin(data)
-    y_max = np.nanmax(data)
-
-    # Generate an extra time bin, which is needed for the meshgrid
-    dt = filtered_time[1]-filtered_time[0]
-    new_time = filtered_time - dt
-    new_time = np.append(new_time, new_time[-1]+dt)
-
-    # generate 2d meshgrid for the x, y, and z data of the 3D color plot
-    y, x = np.meshgrid(bin_edges, new_time)
-
-    # Fill the generated mesh with particle concentration data
-    p1 = ax[0].pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
-
-    ax[0].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax[0].set_xticklabels(ax[0].get_xticklabels(), rotation=-45, ha="left")
-    ax[0].set_xlabel("Time, HH:MM")
-    plt.subplots_adjust(hspace=0.05)
+            new_df_number[key], new_df_mass[key] = filtered_number, filtered_mass
         
-    # Make the y-scal logarithmic and set a label
-    ax[0].set_yscale("log")
-    ax[0].set_ylabel("Dp, $\mu$m")
+        ax1, p1 = plot_heatmap(ax[0][0], new_df_number, filtered_time, bin_edges, cutpoint)
+        ax2, p2 = plot_heatmap(ax[0][1], new_df_mass, filtered_time, bin_edges, cutpoint)
 
-    total_conc = new_df.iloc[:,1:].sum(axis=1)
-    ax[1].plot(new_df['Time'], total_conc, lw = 1, color = 'r')
+        ax3 = plot_total(ax[1][0], new_df_number)
+        ax4 = plot_total(ax[1][1], new_df_mass)
 
-    ax[1].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    ax[1].set_xticklabels(ax[1].get_xticklabels(), rotation=-45, ha="left")
-    ax[1].set_xlabel("Time, HH:MM")
-    plt.subplots_adjust(hspace=0.05)
+        # Insert coloarbar and label it
+        col1 = fig.colorbar(p1, ax=ax1)
+        col2 = fig.colorbar(p2, ax=ax2)
 
-    # Insert coloarbar and label it
-    col = fig.colorbar(p1, ax=ax[0])
-    if datatype == "number":
-        col.set_label('dN, cm$^{-3}$')
-        ax[1].set_ylabel('dN, cm$^{-3}$')
-    elif datatype == "mass":
-        col.set_label('dm, $\mu$g/m$^{3}$')
-        ax[1].set_ylabel('dm, $\mu$g/m$^{3}$')
-    elif datatype == "normed":
-        col.set_label('dN/dlogDp, cm$^{-3}$')
-        ax[1].set_ylabel('dN/dlogDp, cm$^{-3}$')
+        col1.set_label('dN/dlogDp, cm$^{-3}$')
+        col2.set_label('dM/dlogDp, $\mu$g/m$^{3}$')
+        
+        ax3.set_ylabel('Total number conc., cm$^{-3}$')
+        ax4.set_ylabel('Total mass conc., $\mu$g/m$^{3}$')
 
-    # Set ticks on the plot to be longer
-    ax[0].tick_params(axis="y",which="both",direction='out')
-    ax[1].tick_params(axis="y",which="both",direction='out')
+        # Set ticks on the plot to be longer
+        ax1.tick_params(axis="y",which="both",direction='out')
+        ax2.tick_params(axis="y",which="both",direction='out')
+
+    else:
+        time = pd.to_datetime(df['Time'])
+
+        time_filter = (time >= start_time) & (time <= end_time)
+
+        filtered_time = np.array(time[time_filter])
+
+        new_df = pd.DataFrame({'Time': filtered_time})
+
+        for key in df_keys:
+            conc = np.array(df[key])
+            conc = pd.to_numeric(conc, errors='coerce')
+            filtered_conc = conc[time_filter]
+
+            new_df[key] = filtered_conc
+
+        ax1, p1 = plot_heatmap(ax[0], new_df, filtered_time, bin_edges, cutpoint)
+
+        ax2 = plot_total(ax[1], new_df)
+
+        # Insert coloarbar and label it
+        col = fig.colorbar(p1, ax=ax1)
+        if datatype == "number":
+            col.set_label('dN/dlogDp, cm$^{-3}$')
+            ax2.set_ylabel('Total concentration, cm$^{-3}$')
+        elif datatype == "mass":
+            col.set_label('dM/dlogDp, $\mu$g/m$^{3}$')
+            ax2.set_ylabel('Total concentration, $\mu$g/m$^{3}$')
+
+        # Set ticks on the plot to be longer
+        ax1.tick_params(axis="y",which="both",direction='out')
+        ax2.tick_params(axis="y",which="both",direction='out')
 
 def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bins, clr, inst_error, axis_labels, mass, cut_point):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
