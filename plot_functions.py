@@ -527,23 +527,42 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
 
         ax2.tick_params(axis = 'y', labelsize = 8, labelcolor = 'dimgrey')
         ax2.set_ylabel('Background ' + axis_labels[1], color = 'dimgrey')
+
+        # Create a scalar mappable for colorbar
+        norm = mpl.colors.Normalize(vmin=run_length, vmax=run_length + (n_lines - 1) * run_length)
+        sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])  # Required for colorbar
+
+        # # Create a new axis for the colorbar to the right of ax2
+        # cbar_ax = fig.add_axes([ax2.get_position().x1 + 0.04,  # X-position (right of ax2)
+        #                         ax2.get_position().y0,       # Y-position (same as ax2)
+        #                         0.02,                         # Width of colorbar
+        #                         ax2.get_position().height])  # Height of colorbar
+
+        # Create and place the colorbar
+        cbar = fig.colorbar(sm, ax=ax2, orientation='vertical', pad=0.05)
+        cbar.set_label('Time (min)', fontsize=9)
+        cbar.ax.tick_params(labelsize=8)
+
+        ax.tick_params(axis='both', labelsize=8)
+        ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
     else:
         for i in range(n_lines):
             ax.plot(bins, data[i], color=colors[i], lw=1.2)
 
-    # Create a scalar mappable for colorbar
-    norm = mpl.colors.Normalize(vmin=run_length, vmax=run_length + (n_lines - 1) * run_length)
-    sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])  # Required for colorbar
+        # Create a scalar mappable for colorbar
+        norm = mpl.colors.Normalize(vmin=run_length, vmax=run_length + (n_lines - 1) * run_length)
+        sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])  # Required for colorbar
 
-    # Add colorbar to the figure
-    cbar = fig.colorbar(sm, ax=ax, orientation='vertical')
-    cbar.set_label('Time (min)', fontsize=9)
-    cbar.ax.tick_params(labelsize=8)
+        # Add colorbar to the figure
+        cbar = fig.colorbar(sm, ax=ax, orientation='vertical')
+        cbar.set_label('Time (min)', fontsize=9)
+        cbar.ax.tick_params(labelsize=8)
 
-    ax.tick_params(axis='both', labelsize=8)
-    ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
-    
+        ax.tick_params(axis='both', labelsize=8)
+        ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
+
 def plot_reference(ax, x_plot, data, keys, labels):
     # Plot a scatter plot of the two concentrations
     ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
