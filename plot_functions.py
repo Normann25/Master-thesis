@@ -174,7 +174,7 @@ def ma_multi_timeseries(ax, data, dict_keys, screening, timestamps, loc):
         ma_single_timeseries(ax[i], df, screening, timestamps, loc)
 
         if screening:
-            title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]
+            title = 'Bag ' + str(i+1) + ', ' + key.split('_')[0]
             ax[i].set_title(title)
 
 def plot_LCS_single(ax, data_dict, dict_key, timelabel, start_time, end_time, concentration, ylabel):
