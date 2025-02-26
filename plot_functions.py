@@ -533,12 +533,6 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
         sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm.set_array([])  # Required for colorbar
 
-        # # Create a new axis for the colorbar to the right of ax2
-        # cbar_ax = fig.add_axes([ax2.get_position().x1 + 0.04,  # X-position (right of ax2)
-        #                         ax2.get_position().y0,       # Y-position (same as ax2)
-        #                         0.02,                         # Width of colorbar
-        #                         ax2.get_position().height])  # Height of colorbar
-
         # Create and place the colorbar
         cbar = fig.colorbar(sm, ax=ax2, orientation='vertical', pad=0.05)
         cbar.set_label('Time (min)', fontsize=9)
