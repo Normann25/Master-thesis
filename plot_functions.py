@@ -168,10 +168,10 @@ def ma_single_timeseries(ax, df, screening, timestamps, loc):
     ax.set_xlabel('Time / HH:MM', fontsize = 9)
     ax.set_ylabel('Concentration / $\mu$g m$^{-3}$', fontsize = 9)
 
-def ma_multi_timeseries(ax, data, dict_keys, screening, timestamps):
+def ma_multi_timeseries(ax, data, dict_keys, screening, timestamps, loc):
     for i, key in enumerate(dict_keys):
         df = data[key]
-        ma_single_timeseries(ax[i], df, screening, timestamps)
+        ma_single_timeseries(ax[i], df, screening, timestamps, loc)
 
         if screening:
             title = 'Bag ' + str(i+1) + ', MA ' + key.split('_')[0]

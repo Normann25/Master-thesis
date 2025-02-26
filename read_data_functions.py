@@ -108,25 +108,29 @@ def read_csv_BC(path, parent_path, hr):
 
     for file in files:
         if 'MA200' or 'MA300' in file:
-            serial_number = linecache.getline(os.path.join(path, file), 2)
-            serial_number = serial_number.split(',')[0]
-            serial_number = serial_number.split('"')[1]
-            name = file.split('.')[0]
-            name = serial_number + '_' + name.split('_')[-1]
+            if '.xlsx' in file:
+                pass
+            else:
+                serial_number = linecache.getline(os.path.join(path, file), 2)
+                serial_number = serial_number.split(',')[0]
+                serial_number = serial_number.split('"')[1]
+                    
+                name = file.split('.')[0]
+                name = serial_number + '_' + name.split('_')[-1]
 
-            with open(os.path.join(path, file)) as f:
-                df = pd.read_csv(f)
-                
-                df['Time'] = df[['Date local (yyyy/MM/dd)', 'Time local (hh:mm:ss)']].agg(' '.join, axis=1)
+                with open(os.path.join(path, file)) as f:
+                    df = pd.read_csv(f)
+                    
+                    df['Time'] = df[['Date local (yyyy/MM/dd)', 'Time local (hh:mm:ss)']].agg(' '.join, axis=1)
 
-                df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")  + pd.Timedelta(hours = hr)
+                    df['Time'] = format_timestamps(df['Time'], '%Y/%m/%d %H:%M:%S', "%d/%m/%Y %H:%M")  + pd.Timedelta(hours = hr)
 
-                for key in df.keys():
-                    if 'BCc' in key:
-                        df[key][df[key] < 0] = 0
-                        df[key] = df[key] / 1000
+                    for key in df.keys():
+                        if 'BCc' in key:
+                            df[key][df[key] < 0] = 0
+                            df[key] = df[key] / 1000
 
-            data_dict[name] = df
+                data_dict[name] = df
 
     return data_dict 
 
