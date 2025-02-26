@@ -507,44 +507,43 @@ def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, 
 
     return mean_conc, axes, figs
 
-def plot_running_mean(ax, df, bins, bin_edges, cols, axis_labels, loc, run_length, background):
+def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, background):
     n_lines = len(df.keys())
-    cmap = mpl.colormaps['plasma']
-    colors = cmap(np.linspace(0, 1, n_lines)[::-1])
+    cmap = mpl.colormaps['plasma_r']
+    colors = cmap(np.linspace(0, 1, n_lines))
 
     data = np.array(df[df.keys()]).T
 
-    if bin_edges != None:
-        dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
-        data=data/dlogDp
+    if bin_edges is not None:
+        dlogDp = np.log10(bin_edges[1:]) - np.log10(bin_edges[:-1])
+        data = data / dlogDp
 
-    if background == True:
+    if background:
         for i in range(len(df.keys()[1:])):
-            lbl = str(run_length + i*run_length) + ' min'
-        
-            ax.plot(bins, data[i+1], color = colors[i+1], label = lbl, lw = 1.2)
-    
+            ax.plot(bins, data[i+1], color = colors[i+1], lw = 1.2)
+
         ax2 = ax.twinx()
         ax2.plot(bins, data[0], color = 'k', alpha = 0.3, label = 'Background', lw = 1)
 
-        # ax2.yaxis.set_minor_locator(AutoMinorLocator())
-        ax2.tick_params(axis = 'y', labelsize = 8, labelcolor = 'dimgrey') # , which = 'major', direction = 'out', right = True
-        # ax2.tick_params(axis = 'y', which = 'minor', direction = 'out', width = 1, length = 2, right = True, labelcolor = 'dimgrey')
+        ax2.tick_params(axis = 'y', labelsize = 8, labelcolor = 'dimgrey')
         ax2.set_ylabel('Background ' + axis_labels[1], color = 'dimgrey')
-
     else:
-        for i in range(len(df.keys())):
-            lbl = str(run_length + i*run_length) + ' min'
+        for i in range(n_lines):
+            ax.plot(bins, data[i], color=colors[i], lw=1.2)
 
-            ax.plot(bins, data[i], color = colors[i], label = lbl, lw = 1.2)
-        
-    ax.legend(fontsize = 8, ncol = cols, loc = loc)
-    # ax.xaxis.set_minor_locator(AutoMinorLocator())
-    # ax.yaxis.set_minor_locator(AutoMinorLocator())
-    ax.tick_params(axis = 'both', labelsize = 8) # , which = 'major', direction = 'out', bottom = True, left = True
+    # Create a scalar mappable for colorbar
+    norm = mpl.colors.Normalize(vmin=run_length, vmax=run_length + (n_lines - 1) * run_length)
+    sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])  # Required for colorbar
 
-    ax.set(xlabel = axis_labels[0], ylabel = axis_labels[1], xscale='log')
+    # Add colorbar to the figure
+    cbar = fig.colorbar(sm, ax=ax, orientation='vertical')
+    cbar.set_label('Time (min)', fontsize=9)
+    cbar.ax.tick_params(labelsize=8)
 
+    ax.tick_params(axis='both', labelsize=8)
+    ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
+    
 def plot_reference(ax, x_plot, data, keys, labels):
     # Plot a scatter plot of the two concentrations
     ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
