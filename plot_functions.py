@@ -32,7 +32,7 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
 
         ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
         ax[i].set_title(dict_key, fontsize = 9)
-    fig.supxlabel('Time [HH:MM]', fontsize = 10)
+    fig.supxlabel('Time / HH:MM', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
 
 def plot_inset(ax, height, loc, bb2a, plot_width, xdata, ydata, width, bar, timeseries, timestamps):
@@ -119,9 +119,9 @@ def discmini_single_timeseries(ax, df, n):
 
     ax.legend(frameon = False, fontsize = 8, handles = [p1, p2])
 
-    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-    ax.set_ylabel('Concentration / #/cm$^{3}$', color = p1.get_color(), fontsize = 9)
-    ax2.set_ylabel('LDSA / $\mu$m$^{2}$/cm$^{3}$', color = p2.get_color(), fontsize = 9)       
+    ax.set_xlabel('Time / HH:MM', fontsize = 9)
+    ax.set_ylabel('Concentration / cm$^{-3}$', color = p1.get_color(), fontsize = 9)
+    ax2.set_ylabel('LDSA / $\mu$m$^{2}$cm$^{-3}$', color = p2.get_color(), fontsize = 9)       
 
 def discmini_multi_timeseries(ax, data, dict_keys, n, titles):
     for i, key in enumerate(dict_keys):
@@ -165,8 +165,8 @@ def ma_single_timeseries(ax, df, screening, timestamps, loc):
 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
 
-    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-    ax.set_ylabel('Concentration / $\mu$g/m$^{3}$', fontsize = 9)
+    ax.set_xlabel('Time / HH:MM', fontsize = 9)
+    ax.set_ylabel('Concentration / $\mu$g m$^{-3}$', fontsize = 9)
 
 def ma_multi_timeseries(ax, data, dict_keys, screening, timestamps):
     for i, key in enumerate(dict_keys):
@@ -215,7 +215,7 @@ def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration,
         plot_LCS_single(ax[i], data_dict, dict_key, 'timestamp', start_time, end_time, concentration, ylabel[i])
 
     # Add common x and y labels for the figure
-    fig.supxlabel('Time', fontsize=10)
+    fig.supxlabel('Time / HH:MM', fontsize=10)
 
 def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
     for i, st in enumerate(start_time):
@@ -227,7 +227,7 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
         ax[i].set_title(titles[i])
 
     # Add common x and y labels for the figure
-    fig.supxlabel('Time', fontsize=10)
+    fig.supxlabel('Time / HH:MM', fontsize=10)
 
 def partector_single_timeseries(ax, df, timestamps, loc):
     start_time = pd.to_datetime(timestamps[0])
@@ -251,8 +251,8 @@ def partector_single_timeseries(ax, df, timestamps, loc):
     # Rotate and format date labels
     plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
 
-    ax.set_xlabel('Time [HH:MM]', fontsize = 9)
-    ax.set_ylabel('LDSA / $\mu$m$^{2}$/cm$^{3}$', fontsize = 9)
+    ax.set_xlabel('Time / HH:MM', fontsize = 9)
+    ax.set_ylabel('LDSA / $\mu$m$^{2}$cm$^{-3}$', fontsize = 9)
 
 def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, normed, cutpoint):
 
@@ -287,7 +287,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
-        ax.set_xlabel("Time, HH:MM")
+        ax.set_xlabel("Time / HH:MM")
         plt.subplots_adjust(hspace=0.05)
             
         # Make the y-scal logarithmic and set a label
@@ -301,7 +301,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
-        ax.set_xlabel("Time, HH:MM")
+        ax.set_xlabel("Time / HH:MM")
         plt.subplots_adjust(hspace=0.05)
         return ax
     
@@ -336,11 +336,11 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
         col1 = fig.colorbar(p1, ax=ax1)
         col2 = fig.colorbar(p2, ax=ax2)
 
-        col1.set_label('dN/dlogDp, cm$^{-3}$')
-        col2.set_label('dM/dlogDp, $\mu$g/m$^{3}$')
+        col1.set_label('dN/dlogDp / cm$^{-3}$')
+        col2.set_label('dM/dlogDp / $\mu$g m$^{-3}$')
         
-        ax3.set_ylabel('Total number conc., cm$^{-3}$')
-        ax4.set_ylabel('Total mass conc., $\mu$g/m$^{3}$')
+        ax3.set_ylabel('Total number conc. / cm$^{-3}$')
+        ax4.set_ylabel('Total mass conc. / $\mu$g m$^{-3}$')
 
         # Set ticks on the plot to be longer
         ax1.tick_params(axis="y",which="both",direction='out')
@@ -369,11 +369,11 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
         # Insert coloarbar and label it
         col = fig.colorbar(p1, ax=ax1)
         if datatype == "number":
-            col.set_label('dN/dlogDp, cm$^{-3}$')
-            ax2.set_ylabel('Total concentration, cm$^{-3}$')
+            col.set_label('dN/dlogDp / cm$^{-3}$')
+            ax2.set_ylabel('Total concentration / cm$^{-3}$')
         elif datatype == "mass":
-            col.set_label('dM/dlogDp, $\mu$g/m$^{3}$')
-            ax2.set_ylabel('Total concentration, $\mu$g/m$^{3}$')
+            col.set_label('dM/dlogDp / $\mu$g m$^{-3}$')
+            ax2.set_ylabel('Total concentration / $\mu$g m$^{-3}$')
 
         # Set ticks on the plot to be longer
         ax1.tick_params(axis="y",which="both",direction='out')
@@ -409,7 +409,7 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bin_me
 
     # Explicitly set ylabel color for primary axis
     ax.tick_params(axis = 'y', labelcolor='tab:blue')
-    ax.set_ylabel('dN/dlogDp, cm$^{-3}$', color='tab:blue')
+    ax.set_ylabel('dN/dlogDp / cm$^{-3}$', color='tab:blue')
 
     ax.set(xlabel='Particle diameter / $\mu$m', xscale='log')
 
@@ -448,7 +448,7 @@ def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bin_me
         ax2.tick_params(axis = 'y', labelcolor='red')
 
         # Explicitly set ylabel color for secondary axis
-        ax2.set_ylabel('dM/dlogDp, $\mu$g/m$^{3}$', color='red')  # Use axis_labels[2] for clarity
+        ax2.set_ylabel('dM/dlogDp / $\mu$g m$^{-3}$', color='red')  # Use axis_labels[2] for clarity
     
     else:
         ax2, mean_mass, error_mass = 0, 0, 0
@@ -498,10 +498,10 @@ def plot_mean_all(timestamps, dict_number, dict_mass, dict_keys, df_keys, bins, 
     for key, label in zip(new_dict_keys, labels):
         ax2[0].plot(mean_conc[key]['Diameter'], mean_conc[key]['number'], label = label)
         ax2[0].legend(fontsize = 8)
-        ax2[0].set(xlabel = 'Particle diameter / $\mu$m', ylabel = 'dN/dlogDp, cm$^{-3}$', xscale='log', title = 'Particle number')
+        ax2[0].set(xlabel = 'Particle diameter / $\mu$m', ylabel = 'dN/dlogDp / cm$^{-3}$', xscale='log', title = 'Particle number')
         ax2[1].plot(mean_conc[key]['Diameter'], mean_conc[key]['mass'], label = label)
         ax2[1].legend(fontsize = 8)
-        ax2[1].set(xlabel = 'Particle diameter / $\mu$m', ylabel = 'dM/dlogDp, $\mu$g/m$^{3}$', xscale = 'log', title = 'Particle mass')
+        ax2[1].set(xlabel = 'Particle diameter / $\mu$m', ylabel = 'dM/dlogDp / $\mu$g m$^{-3}$', xscale = 'log', title = 'Particle mass')
 
     fig2.tight_layout()
 
@@ -535,7 +535,7 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
 
         # Create and place the colorbar
         cbar = fig.colorbar(sm, ax=ax2, orientation='vertical', pad=0.05)
-        cbar.set_label('Time (min)', fontsize=9)
+        cbar.set_label('Time / min', fontsize=9)
         cbar.ax.tick_params(labelsize=8)
 
         ax.tick_params(axis='both', labelsize=8)
@@ -551,7 +551,7 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
 
         # Add colorbar to the figure
         cbar = fig.colorbar(sm, ax=ax, orientation='vertical')
-        cbar.set_label('Time (min)', fontsize=9)
+        cbar.set_label('Time / min', fontsize=9)
         cbar.ax.tick_params(labelsize=8)
 
         ax.tick_params(axis='both', labelsize=8)
