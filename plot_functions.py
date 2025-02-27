@@ -2,15 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pandas as pd
-import os
 import sys
-from matplotlib.ticker import FuncFormatter
-import time
-from datetime import datetime
 import matplotlib.dates as mdates
-import linecache
-from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from iminuit import Minuit
 sys.path.append('..')
 from calculations import *
 #%%
