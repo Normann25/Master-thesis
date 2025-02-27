@@ -1,14 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import sys
-from matplotlib.ticker import FuncFormatter
-import time
 from datetime import datetime
-import matplotlib.dates as mdates
 import linecache
-from iminuit import Minuit
 #%%
 def read_txt(path, parent_path, file_names, separation, skip):
     new_dict = {}

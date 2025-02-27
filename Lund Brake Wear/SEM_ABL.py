@@ -8,8 +8,6 @@ Created on Thu Feb  6 13:53:18 2025
 import pandas as pd
 import sys
 import os
-local_package_path = os.path.abspath(r"C:\Users\B279683\Documents\GitHub\NFA_Aerosol\src\NFA_Aerosol")
-sys.path.insert(0, local_package_path)
 from NFA_Aerosol import Utility_Lib as UL
 from NFA_Aerosol import Instrument_Lib as IL
 import numpy as np
@@ -31,8 +29,14 @@ params = {'legend.fontsize': 15,
 plt.rcParams.update(params)
 
 #%% Load SEM/EDS data
+parent_path = '../../../../'
+path = "L:/PG-Nanoteknologi/PROJEKTER/2024 Laura og Nan/Lund/SEM"
 
-files = UL.File_list(r"C:\Users\B279683\Desktop\Laura og Nan - Brake test",".xlsx",2)
+parentPath = os.path.abspath(parent_path)
+if parentPath not in sys.path:
+    sys.path.insert(0, parentPath)
+
+files = UL.File_list(path, search = ".xlsx") #, max_subfolder=2)
 
 dfs = []
 for file in files:
@@ -53,7 +57,7 @@ combined_df = combined_df.copy().drop(columns=["Field","Stage X","Stage Y","Id"]
 
 #%% Load Partector data
 
-files = UL.File_list(r"L:\PG-Nanoteknologi\PERSONER\ABL\Projekter\Nan og Laura\Partector Data",".txt",2)
+files = UL.File_list(path,".txt") #,2)
 
 dfs = []
 for file in files:
@@ -274,15 +278,15 @@ for col, sample in enumerate(samples):
     ax_bottom.grid(axis="both", which="both", color="k", alpha=0.2)
 
 # Add a shared x-axis label
-axs[1,2].set_xlabel("ECD (nm)")
-axs[1,0].set_ylabel("Contribution, %")
-axs[0,0].set_ylabel("dN/dlogDp, cm$^{-3}$",labelpad=15)
+axs[1,2].set_xlabel("ECD / nm")
+axs[1,0].set_ylabel("Contribution / %")
+axs[0,0].set_ylabel("dN/dlogDp / cm$^{-3}$",labelpad=15)
 plt.subplots_adjust(hspace=0.07,wspace=0.15,right=0.85)
 
 # Add a legend for clusters (shared across subplots)
 axs[1, -1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left", borderaxespad=0)
 
-fig.savefig(r"C:\Users\B279683\Desktop\Size_distribution.png",dpi=300,bbox_inches='tight')
+fig.savefig(r"SEM\Size_distribution.png",dpi=600,bbox_inches='tight')
 #%% Display the average composition of each cluster
 
 # Compute the average composition per cluster
@@ -314,12 +318,12 @@ for i, bar in enumerate(particle_counts):
         )
 # Formatting
 plt.xlabel("Cluster",fontsize=15)
-plt.ylabel("Atomic Percent (%)",fontsize=15)
+plt.ylabel("Atomic Percent / %",fontsize=15)
 plt.title("Average Composition per Cluster")
 plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left",borderaxespad=0,fontsize=12)
 plt.xticks(rotation=0)
 plt.grid(axis="y", linestyle="--", alpha=0.7)
 plt.tight_layout()
 
-plt.savefig(r"C:\Users\B279683\Desktop\Cluster_Composition.png",dpi=300,bbox_inches='tight')
+plt.savefig(r"SEM\Cluster_Composition.png",dpi=300,bbox_inches='tight')
 
