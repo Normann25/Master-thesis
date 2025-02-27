@@ -1,13 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-import os
-import sys
-from matplotlib.ticker import FuncFormatter
-import time
-from datetime import datetime
-import matplotlib.dates as mdates
-import linecache
 from iminuit import Minuit
 #%%
 def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
