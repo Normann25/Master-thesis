@@ -292,7 +292,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
             
         # Make the y-scal logarithmic and set a label
         ax.set_yscale("log")
-        ax.set_ylabel("Dp, $\mu$m")
+        ax.set_ylabel("Dp / $\mu$m")
         return ax, p1
     
     def plot_total(ax, df):
