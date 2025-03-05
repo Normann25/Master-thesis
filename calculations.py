@@ -349,3 +349,101 @@ def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, l
         new_dict_mass[name] = merged_mass
 
     return new_dict_number, new_dict_mass, merged_keys, merged_bin_mean
+
+
+# Functions written by Anders Brostrøm
+def Partector_TEM_sampling(Partector_data, ignore_samplings_below=0):
+    """
+    Function to identify active sampling periods of the PartectorTEM and return
+    the sample duration as well as the start time for the given sample.
+
+    Parameters
+    ----------
+    Partector_data : np.array
+        An array with partector data as returned by the IL.Load_Partector function.
+    ignore_samplings_below : int, optional
+        When specified, the function ignores samplings with a duration shorter
+        than the specified value in minutes. The default is 0.
+
+    Returns
+    -------
+    valid_durations : np.array
+        Array of the sampling durations within the dataset given in minutes.
+    valid_starts : np.array
+        Array of sample starting times from the dataset.
+    """
+    signal = Partector_data[:, 5].astype(int)  # Ensure the signal is integer
+    timestamps = Partector_data[:, -1]  # Extract the timestamps (assumed to be datetime.datetime objects)
+
+    # Find transitions
+    start_indices = np.where((signal[:-1] == 0) & (signal[1:] == 1))[0] + 1
+    end_indices = np.where((signal[:-1] == 1) & (signal[1:] == 0))[0] + 1
+    
+    # Step 3: Ensure proper pairing of starts and ends
+    if len(start_indices) == 0 or len(end_indices) == 0:
+        print("No transitions detected.")
+        return  # Exit the function if no transitions are detected
+    
+    # Remove unmatched starts/ends if necessary
+    if end_indices[0] < start_indices[0]:
+        end_indices = end_indices[1:]  # Remove unmatched end at the start
+    if start_indices[-1] > end_indices[-1]:
+        start_indices = start_indices[:-1]  # Remove unmatched start at the end
+    
+    # Step 4: Calculate durations (in minutes) and filter based on ignore_samplings_below
+    valid_durations = []
+    valid_starts = []
+    for start, end in zip(start_indices, end_indices):
+        start_time = timestamps[start]
+        end_time = timestamps[end]
+        duration = (end_time - start_time).total_seconds() / 60  # Convert to minutes
+        
+        # Only keep durations longer than ignore_samplings_below
+        if duration >= ignore_samplings_below:
+            valid_durations.append(duration)
+            valid_starts.append(start_time)
+    
+    # Step 5: Output results
+    if not valid_durations:
+        print("No valid sampling segments detected.")
+    else:
+        for j in range(len(valid_durations)):
+            print("Start: {0}, Duration: {1:.2f} minutes".format(valid_starts[j],valid_durations[j]))
+    return np.array(valid_durations), np.array(valid_starts)
+
+def Partector_Ceff(Psize):
+    """
+    Function to estimate the collection efficiency of the partectorTEM at the
+    specified particle size in nm. The collection efficiency as a fraction is 
+    returned and can be applied to the measured concentration to get a 
+    corrected concentration.
+    
+    It should be noted, that the expression for the collection efficiency was fitted
+    to data from experiments with NaCl and Ag particles in the size range from 
+    3 to 320 nm, and may therefore not be accurate at um sizes! Especially, at
+    sizes larger than 4-5 um, the estimate will fail, as impaction will start to
+    play a role. There are currently no data on the matter, but theoretical 
+    caculations suggest that D50 is a roughly 11 um, but an effect can be seen
+    already at 4-5 um.
+   
+    Reference: Fierz, M., Kaegi, R., and Burtscher, H.;"Theoretical and 
+    Experimental Evaluation of a Portable Electrostatic TEM Sampler", Aerosol
+    Science and Technology, 41, issue 5, 2007.
+
+    Parameters
+    ----------
+    Psize : float or np.array
+        Either a single particle size given as a float, or an array of particle
+        sizes to be used for calculating the collection efficiency. The sizes should
+        be given in nm.
+
+    Returns
+    -------
+    Collection_efficiency : float or np.array
+        The calculated collection efficiency of the PartectorTEM at the specified
+        particle size/sizes specified as a fraction (0-1).
+
+    """
+    Collection_efficiency = (0.43837287*Psize**(-0.48585362))
+    
+    return Collection_efficiency 
