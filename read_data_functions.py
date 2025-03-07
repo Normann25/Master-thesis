@@ -166,7 +166,7 @@ def read_discmini(path, parent_path, file_names, separation):
     
     return new_dict
 
-def read_LCS_data(path, parent_path, time_label, hour):
+def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
     """Read LCS data from CSV files in the specified path."""
     parentPath = os.path.abspath(parent_path)
     if parentPath not in sys.path:
@@ -176,13 +176,22 @@ def read_LCS_data(path, parent_path, time_label, hour):
     data_dict = {}
 
     for file in files:
-        if 'DG' in file:
-            separations = [',', ';']
-            decimals = ['.', ',']
+        if 'DG' or 'LCS' in file:
+            separations = [',', ';', ';']
+            decimals = ['.', ',', '.']
             for sep, dec in zip(separations, decimals):
                 try:
                     with open(os.path.join(path, file)) as f:
                         df = pd.read_csv(f, sep=sep, decimal=dec)
+
+                    # Convert additional columns to numeric if they exist
+                    if 'SPS30_PM2.5' in df.columns:
+                        df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
+
+                    if L_to_cm3:
+                        keys = ['PM5000S_2_PN0.3', 'PM5000S_2_PN0.5','PM5000S_2_PN1','PM5000S_2_PN2.5','PM5000S_2_PN5','PM5000S_2_PN10']
+                        for key in keys: 
+                            df[key] = pd.to_numeric(df[key]) / 1000
 
                     # Process the timestamp column
                     df['Time'] = format_timestamps(df[time_label], "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S")
@@ -196,6 +205,25 @@ def read_LCS_data(path, parent_path, time_label, hour):
 
                 except KeyError:
                     print(f'Failed to read file with separation: {sep}')
+
+        if file.endswith('.xlsx'):
+            with open(os.path.join(path, file)) as f:
+                df = pd.read_excel(f)
+
+            dates = []
+            for time in df[time_label]:
+                date = str(time).split(' ')[0]
+                dates.append(date)
+            df['Date'] = dates
+
+            df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
+
+            for date in df['Date'].unique():
+                for sensor in df['Entity Name'].unique():
+                    mask = df['Entity Name'] == sensor
+                    new_df = df[mask].reset_index()
+                    df_name = str(date) + ' ' + str(sensor)
+                    data_dict[df_name] = new_df.drop('index', axis = 1)
 
     return data_dict
 
