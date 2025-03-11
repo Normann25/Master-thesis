@@ -312,7 +312,9 @@ def read_OPS(path, parent_path, hr): # , V_chamber):
                     C_i, ts, td = np.array(df[key]), np.zeros(len(df['Elapsed Time [s]'])) + df['Elapsed Time [s]'][0], np.array(df['Deadtime (s)'])
 
                     N_i = C_i / (16.67 * (ts - DCT * td))
-                    df[key] = N_i 
+                    df[key] = N_i
+
+                df['PN2.5'] = df.iloc[:,1:11].sum(axis=1)
                 df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
 
                 new_dict[name] = df
