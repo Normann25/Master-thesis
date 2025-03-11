@@ -553,25 +553,37 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
         ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
 
 def plot_reference(ax, x_plot, data, keys, labels):
-    # Plot a scatter plot of the two concentrations
-    ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
+    if labels == None:
+        # Plot a scatter plot of the two concentrations
+        ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-    a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
-    y_fit = a*x_plot + b
+        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
+        y_fit = a*x_plot + b
 
-    ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
+        ax.plot(x_plot, y_fit, color = 'k', lw = 1.2)
 
-    scatter_lbl = labels[0].split(' ')[0] + ' vs ' + labels[1].split(' ')[0]
-    ax.scatter(data[keys[0]], data[keys[1]], s=10, c='blue', label = scatter_lbl) 
+        ax.scatter(data[keys[0]], data[keys[1]], s=10, c='blue')
 
-    # Set labels and title for the scatter plot
-    ax.tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
-    ax.tick_params(axis = 'both', which = 'minor', direction = 'out', bottom = True, left = True)
-    ax.set_xlabel(labels[0], fontsize=8)
-    ax.set_ylabel(labels[1], fontsize=8)
-    ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
+    else:
+        # Plot a scatter plot of the two concentrations
+        ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-    ax.legend(fontsize = 8)
+        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
+        y_fit = a*x_plot + b
+
+        ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
+
+        scatter_lbl = labels[0].split(' ')[0] + ' vs ' + labels[1].split(' ')[0]
+        ax.scatter(data[keys[0]], data[keys[1]], s=10, c='blue', label = scatter_lbl) 
+
+        # Set labels and title for the scatter plot
+        ax.set_xlabel(labels[0], fontsize=8)
+        ax.set_ylabel(labels[1], fontsize=8)
+        ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
+
+        ax.legend(fontsize = 8)
+
+    return a, b, squares, ndof, R2
 
 def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels):
 
