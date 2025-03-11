@@ -350,6 +350,52 @@ def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, l
 
     return new_dict_number, new_dict_mass, merged_keys, merged_bin_mean
 
+def LCS_bins(data_dict, dict_keys, old_keys_flip, flip, old_keys_bin):
+    new_dict = {}
+
+    for i, key in enumerate(dict_keys):
+        new_df = pd.DataFrame({'Time': data_dict[key]['Time']})
+        if flip[i] == True:
+            new_keys = ['PN0.5', 'PN1', 'PN2.5', 'PN5', 'PN10']
+            for j in range(len(new_keys)):  
+                new_df[new_keys[j]] = (data_dict[key][old_keys_flip[j]] - data_dict[key][old_keys_flip[j+1]])
+            
+            new_df['PN<1'] = new_df['PN0.5'] + new_df['PN1']
+            new_df['PN<2.5'] = new_df['PN<1'] + new_df['PN2.5']
+            new_df['PN<5'] = new_df['PN<2.5'] + new_df['PN5']
+            new_df['PN<10'] = new_df['PN<5'] + new_df['PN10']
+
+            new_dict[key] = new_df
+            
+        else:    
+            if 'DG-0001A' in key:
+                new_dict[key] = data_dict[key]
+
+            else:
+                try:
+                    new_keys = ['PN0.5', 'PN<1', 'PN<2.5', 'PN<5', 'PN<10']
+                    for old, new in zip(old_keys_bin, new_keys):
+                        new_df[new] = data_dict[key][old]
+                
+                except KeyError:
+                    new_df['PN0.5'] = data_dict[key]['PN0.5, #/m3']
+                    new_keys = ['PN<1', 'PN<2.5', 'PN<5', 'PN<10']
+                    for old, new in zip(old_keys_bin[1:], new_keys):
+                        new_df[new] = data_dict[key][old]
+
+                new_dict[key] = new_df
+
+    return new_dict
+
+def merge_dicts(*dict_args):
+    """
+    Given any number of dictionaries, shallow copy and merge into a new dict,
+    precedence goes to key-value pairs in latter dictionaries.
+    """
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
 
 # Functions written by Anders Brostrøm
 def Partector_TEM_sampling(Partector_data, ignore_samplings_below=0):

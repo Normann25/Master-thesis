@@ -5,14 +5,19 @@ import sys
 from datetime import datetime
 import linecache
 #%%
-def read_txt(path, parent_path, file_names, separation, skip):
-    new_dict = {}
-
+def file_list(path, parent_path):
     ParentPath = os.path.abspath(parent_path)
     if ParentPath not in sys.path:
         sys.path.insert(0, ParentPath)
     
     files = os.listdir(path)
+
+    return files
+
+def read_txt(path, parent_path, file_names, separation, skip):
+    new_dict = {}
+
+    files = file_list(path, parent_path)
 
     for name in file_names:
         for file in files:
@@ -24,28 +29,25 @@ def read_txt(path, parent_path, file_names, separation, skip):
     return new_dict
 
 def read_csv(path, parent_path, timelabel, skip, hour):
-    ParentPath = os.path.abspath(parent_path)
-    if ParentPath not in sys.path:
-        sys.path.insert(0, ParentPath)
-
-    files = os.listdir(path)
+    files = file_list(path, parent_path)
     data_dict = {}
 
     for file in files:
         if '.csv' or '.CSV' in file:
-            separations = [',', ';']
-            decimal_sep = ['.', ',']
+            separations = [',', ';', ';']
+            decimal_sep = ['.', ',', '.']
             name = file.split('.')[0]
             for sep, dec in zip(separations, decimal_sep):
                 try:
                     with open(os.path.join(path, file), 'r', encoding='ISO-8859-1') as f:
                         df = pd.read_csv(f, sep = sep, decimal = dec, skiprows = skip)
 
-                    df['Time'] = pd.to_datetime(df[timelabel]) + pd.Timedelta(hours=hour)
+                    if timelabel != None:
+                        df['Time'] = pd.to_datetime(df[timelabel]) + pd.Timedelta(hours=hour)
                     data_dict[name] = df
 
                 except KeyError:
-                    print(f'Failed to read file with separation: {sep}')
+                    print(f'Failed to read file with separation: {sep} and decimal: {dec}')
 
     return data_dict
 
@@ -65,17 +67,13 @@ def read_txt_acsm(path, parent_path, file_names, separation, hour):
 def format_timestamps(timestamps, old_format, new_format):
     new_timestamps = []
     for timestamp in timestamps:
-        old_datetime = datetime.strptime(timestamp, old_format)
+        old_datetime = datetime.strptime(str(timestamp), old_format)
         new_datetime = old_datetime.strftime(new_format)
         new_timestamps.append(new_datetime)
     return pd.to_datetime(new_timestamps, format=new_format)
 
 def read_data(path, parent_path, time_label, hour):
-    parentPath = os.path.abspath(parent_path)
-    if parentPath not in sys.path:
-        sys.path.insert(0, parentPath)
-
-    files = os.listdir(path)
+    files = file_list(path, parent_path)
     data_dict = {}
 
     for file in files:
@@ -94,11 +92,7 @@ def read_data(path, parent_path, time_label, hour):
     return data_dict
 
 def read_csv_BC(path, parent_path, hr):
-    parentPath = os.path.abspath(parent_path)
-    if parentPath not in sys.path:
-        sys.path.insert(0, parentPath)
-    
-    files = os.listdir(path)
+    files = file_list(path, parent_path)
     data_dict = {}
 
     for file in files:
@@ -132,11 +126,7 @@ def read_csv_BC(path, parent_path, hr):
 def read_discmini(path, parent_path, file_names, separation):
     new_dict = {}
 
-    ParentPath = os.path.abspath(parent_path)
-    if ParentPath not in sys.path:
-        sys.path.insert(0, ParentPath)
-    
-    files = os.listdir(path)
+    files = file_list(path, parent_path)
 
     for name in file_names:
         for file in files:
@@ -168,47 +158,63 @@ def read_discmini(path, parent_path, file_names, separation):
 
 def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
     """Read LCS data from CSV files in the specified path."""
-    parentPath = os.path.abspath(parent_path)
-    if parentPath not in sys.path:
-        sys.path.insert(0, parentPath)
+    def LCS_csv(file):
+        file_name = file.split('.') [0]
+        data = {}
 
-    files = os.listdir(path)
+        if file.endswith('.CSV'):
+            df = pd.read_csv(os.path.join(path, file), sep=';', decimal=',')
+        
+        if file.endswith('.csv'):
+            df = pd.read_csv(os.path.join(path, file), sep=',', decimal='.')
+
+        # Convert additional columns to numeric if they exist
+        if 'SPS30_PM2.5' in df.columns:
+            df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
+        
+        if L_to_cm3:
+            keys = ['PM5000S_2_PN0.3', 'PM5000S_2_PN0.5','PM5000S_2_PN1','PM5000S_2_PN2.5','PM5000S_2_PN5','PM5000S_2_PN10']
+            for key in keys: 
+                df[key] = pd.to_numeric(df[key]) / 1000
+        
+        # Process the timestamp column
+        time_formats = ["%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M", "%Y-%m-%d %H:%M:%S.%f"]
+
+        for format in time_formats:
+            try:
+                df['Time'] = format_timestamps(df[time_label], format, "%d/%m/%Y %H:%M")
+                df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
+
+                df['Date'] = pd.to_datetime(df[time_label]).dt.date
+                for date in df['Date'].unique():
+                    mask = df['Date'] == date
+                    new_df = df[mask].reset_index()
+                    df_name = str(date) + ' ' + file_name
+                    if len(df_name.split('_')) > 1:
+                        df_name = df_name.split('_') [0]
+                    data[str(df_name)] = new_df.drop('index', axis = 1)
+                    
+            except ValueError:
+                pass
+
+        return data
+    
+    files = file_list(path, parent_path)
     data_dict = {}
 
     for file in files:
-        if 'DG' or 'LCS' in file:
-            separations = [',', ';', ';']
-            decimals = ['.', ',', '.']
-            for sep, dec in zip(separations, decimals):
-                try:
-                    with open(os.path.join(path, file)) as f:
-                        df = pd.read_csv(f, sep=sep, decimal=dec)
-
-                    # Convert additional columns to numeric if they exist
-                    if 'SPS30_PM2.5' in df.columns:
-                        df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
-
-                    if L_to_cm3:
-                        keys = ['PM5000S_2_PN0.3', 'PM5000S_2_PN0.5','PM5000S_2_PN1','PM5000S_2_PN2.5','PM5000S_2_PN5','PM5000S_2_PN10']
-                        for key in keys: 
-                            df[key] = pd.to_numeric(df[key]) / 1000
-
-                    # Process the timestamp column
-                    df['Time'] = format_timestamps(df[time_label], "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S")
-                    df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
-
-                    df['Date'] = pd.to_datetime(df[time_label]).dt.date
-                    for date in df['Date'].unique():
-                        mask = df['Date'] == date
-                        new_df = df[mask].reset_index()
-                        data_dict[str(date)] = new_df.drop(['index', 'Unnamed: 0', time_label, 'Date'], axis = 1)
-
-                except KeyError:
-                    print(f'Failed to read file with separation: {sep}')
+        if 'DG' in file:
+            temp = LCS_csv(file)
+            for key in temp.keys():
+                data_dict[key] = temp[key]
+                
+        if 'LCS'in file:
+            temp = LCS_csv(file)
+            for key in temp.keys():
+                data_dict[key] = temp[key]       
 
         if file.endswith('.xlsx'):
-            with open(os.path.join(path, file)) as f:
-                df = pd.read_excel(f)
+            df = pd.read_excel(os.path.join(path, file), engine="openpyxl")
 
             dates = []
             for time in df[time_label]:
@@ -216,7 +222,7 @@ def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
                 dates.append(date)
             df['Date'] = dates
 
-            df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
+            df['Time'] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
 
             for date in df['Date'].unique():
                 for sensor in df['Entity Name'].unique():
@@ -228,12 +234,8 @@ def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
     return data_dict
 
 def read_SMPS(path, parent_path, hour):
-    """Read LCS data from CSV files in the specified path."""
-    parentPath = os.path.abspath(parent_path)
-    if parentPath not in sys.path:
-        sys.path.insert(0, parentPath)
-
-    files = os.listdir(path)
+    """Read SMPS data from CSV files in the specified path."""
+    files = file_list(path, parent_path)
     data_dict = {}
 
     for file in files:
@@ -275,15 +277,11 @@ def read_SMPS(path, parent_path, hour):
 def read_OPS(path, parent_path, hr): # , V_chamber):
     new_dict = {}
 
-    ParentPath = os.path.abspath(parent_path)
-    if ParentPath not in sys.path:
-        sys.path.insert(0, ParentPath)
-    
-    files = os.listdir(path)
+    files = file_list(path, parent_path)
 
     for file in files:
-        if '.csv' in file:
-            if 'OPS' in file:
+        if 'OPS' in file:
+            if file.endswith('.csv'):
                 name = file.split('.')[0]
                 name = name.split('_')[-1]
                 start_date = linecache.getline(os.path.join(path, file), 8)
@@ -314,8 +312,7 @@ def read_OPS(path, parent_path, hr): # , V_chamber):
                     C_i, ts, td = np.array(df[key]), np.zeros(len(df['Elapsed Time [s]'])) + df['Elapsed Time [s]'][0], np.array(df['Deadtime (s)'])
 
                     N_i = C_i / (16.67 * (ts - DCT * td))
-                    df[key] = N_i # / V_chamber
-
+                    df[key] = N_i 
                 df['Total Conc']=df.iloc[:,1:18].sum(axis=1)
 
                 new_dict[name] = df
@@ -333,29 +330,20 @@ def read_OPS(path, parent_path, hr): # , V_chamber):
                     df['Time'] = df[['Date', 'Start Time']].agg(' '.join, axis=1)
 
                     df['Time'] = format_timestamps(df['Time'], '%m/%d/%y %H:%M:%S', "%d/%m/%Y %H:%M:%S")
-                    # df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
 
                     df = df.drop(['Sample #', 'Date', 'Start Time'], axis = 1)
-
-                    # if df['Aerodynamic Diameter'][1] == 'dN/dlogDp':
-                    #     for key in df.keys()[2:53]:
-                    #         df[key] = np.array(pd.to_numeric(df[key])) * np.log10(float(key))
 
                     new_dict[name] = df
 
                 except KeyError:
-                    print(f'Failed to read file with separation: {separation}')
+                    pass
         
     return new_dict
 
 def read_partector(path, parent_path, names):
     new_dict = {}
 
-    ParentPath = os.path.abspath(parent_path)
-    if ParentPath not in sys.path:
-        sys.path.insert(0, ParentPath)
-    
-    files = os.listdir(path)
+    files = file_list(path, parent_path)
 
     for name in names:
         for file in files:
