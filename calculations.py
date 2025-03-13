@@ -2,6 +2,19 @@ import numpy as np
 import pandas as pd
 from iminuit import Minuit
 #%%
+def time_filtered_arrays(df, date, timestamps, conc_key):
+    start_time = pd.to_datetime(date + ' ' + timestamps[0])
+    end_time = pd.to_datetime(date + ' ' + timestamps[1])
+    time = pd.to_datetime(df['Time'])
+
+    time_filter = (time >= start_time) & (time <= end_time)
+    filtered_time = np.array(time[time_filter])
+
+    conc = np.array(df[conc_key])
+    conc = pd.to_numeric(conc, errors='coerce')
+    filtered_conc = conc[time_filter]
+    return filtered_time, filtered_conc
+
 def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
     pd.options.mode.chained_assignment = None 
     
