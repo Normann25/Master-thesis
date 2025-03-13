@@ -249,56 +249,56 @@ def partector_single_timeseries(ax, df, timestamps, loc):
     ax.set_xlabel('Time / HH:MM', fontsize = 9)
     ax.set_ylabel('LDSA / $\mu$m$^{2}$cm$^{-3}$', fontsize = 9)
 
+def plot_heatmap(ax, df, time, bin_edges, cutpoint, normed):
+    data = np.array(df[df.keys()[1:]])
+
+    if normed == False:
+        dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
+        data=data/dlogDp
+
+    # Set the upper and/or lower limit of the color scale based on input
+    y_min = np.nanmin(data)
+    y_max = np.nanmax(data)
+
+    # Generate an extra time bin, which is needed for the meshgrid
+    dt = time[1]-time[0]
+    new_time = time - dt
+    new_time = np.append(new_time, new_time[-1]+dt)
+
+    # generate 2d meshgrid for the x, y, and z data of the 3D color plot
+    y, x = np.meshgrid(bin_edges, new_time)
+
+    # Fill the generated mesh with particle concentration data
+    p1 = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
+
+    # ax.hlines(np.array([0.1, 2.5]), np.array([new_time[0], new_time[0]]), np.array([new_time[-1], new_time[-1]]), colors = 'white', linestyles = '--')
+
+    if cutpoint != None:
+        ax.hlines(cutpoint, new_time[0], new_time[-1], colors = 'white', linestyles = '--')
+        # ax.text(cutpoint[0] - 0.1*cutpoint[0], new_time[10], cutpoint[1], fontsize = 9, color = 'white')
+        # ax.text(cutpoint[0] + 0.1*cutpoint[0], new_time[10], cutpoint[2], fontsize = 9, color = 'white')
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
+    ax.set_xlabel("Time / HH:MM")
+    plt.subplots_adjust(hspace=0.05)
+        
+    # Make the y-scal logarithmic and set a label
+    ax.set_yscale("log")
+    ax.set_ylabel("Dp / $\mu$m")
+    return ax, p1
+
+def plot_total(ax, df):
+    total_conc = df.iloc[:,1:].sum(axis=1)
+    ax.plot(df['Time'], total_conc, lw = 1, color = 'r')
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
+    ax.set_xlabel("Time / HH:MM")
+    plt.subplots_adjust(hspace=0.05)
+    return ax
+
 def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, normed, cutpoint):
-
-    def plot_heatmap(ax, df, time, bin_edges, cutpoint):
-        data = np.array(df[df.keys()[1:]])
-
-        if normed == False:
-            dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
-            data=data/dlogDp
-
-        # Set the upper and/or lower limit of the color scale based on input
-        y_min = np.nanmin(data)
-        y_max = np.nanmax(data)
-
-        # Generate an extra time bin, which is needed for the meshgrid
-        dt = time[1]-time[0]
-        new_time = time - dt
-        new_time = np.append(new_time, new_time[-1]+dt)
-
-        # generate 2d meshgrid for the x, y, and z data of the 3D color plot
-        y, x = np.meshgrid(bin_edges, new_time)
-
-        # Fill the generated mesh with particle concentration data
-        p1 = ax.pcolormesh(x, y, data, cmap='jet',vmin=y_min, vmax=y_max,shading='flat')
-
-        # ax.hlines(np.array([0.1, 2.5]), np.array([new_time[0], new_time[0]]), np.array([new_time[-1], new_time[-1]]), colors = 'white', linestyles = '--')
-
-        if cutpoint != None:
-            ax.hlines(cutpoint, new_time[0], new_time[-1], colors = 'white', linestyles = '--')
-            # ax.text(cutpoint[0] - 0.1*cutpoint[0], new_time[10], cutpoint[1], fontsize = 9, color = 'white')
-            # ax.text(cutpoint[0] + 0.1*cutpoint[0], new_time[10], cutpoint[2], fontsize = 9, color = 'white')
-
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
-        ax.set_xlabel("Time / HH:MM")
-        plt.subplots_adjust(hspace=0.05)
-            
-        # Make the y-scal logarithmic and set a label
-        ax.set_yscale("log")
-        ax.set_ylabel("Dp / $\mu$m")
-        return ax, p1
-    
-    def plot_total(ax, df):
-        total_conc = df.iloc[:,1:].sum(axis=1)
-        ax.plot(df['Time'], total_conc, lw = 1, color = 'r')
-
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
-        ax.set_xlabel("Time / HH:MM")
-        plt.subplots_adjust(hspace=0.05)
-        return ax
     
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -321,8 +321,8 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
             new_df_number[key], new_df_mass[key] = filtered_number, filtered_mass
         
-        ax1, p1 = plot_heatmap(ax[0][0], new_df_number, filtered_time, bin_edges, cutpoint)
-        ax2, p2 = plot_heatmap(ax[0][1], new_df_mass, filtered_time, bin_edges, cutpoint)
+        ax1, p1 = plot_heatmap(ax[0][0], new_df_number, filtered_time, bin_edges, cutpoint, normed)
+        ax2, p2 = plot_heatmap(ax[0][1], new_df_mass, filtered_time, bin_edges, cutpoint, normed)
 
         ax3 = plot_total(ax[1][0], new_df_number)
         ax4 = plot_total(ax[1][1], new_df_mass)
@@ -357,7 +357,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
             new_df[key] = filtered_conc
 
-        ax1, p1 = plot_heatmap(ax[0], new_df, filtered_time, bin_edges, cutpoint)
+        ax1, p1 = plot_heatmap(ax[0], new_df, filtered_time, bin_edges, cutpoint, normed)
 
         ax2 = plot_total(ax[1], new_df)
 
@@ -562,7 +562,7 @@ def plot_reference(ax, x_plot, data, keys, labels):
 
         ax.plot(x_plot, y_fit, color = 'k', lw = 1.2)
 
-        ax.scatter(data[keys[0]], data[keys[1]], s=10, c='blue')
+        ax.scatter(data[keys[0]], data[keys[1]], s=10, c='k')
 
     else:
         # Plot a scatter plot of the two concentrations

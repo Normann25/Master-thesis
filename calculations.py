@@ -365,7 +365,7 @@ def LCS_bins(data_dict, dict_keys, old_keys_flip, flip, old_keys_bin):
             new_df['PN<5'] = new_df['PN<2.5'] + new_df['PN5']
             new_df['PN<10'] = new_df['PN<5'] + new_df['PN10']
 
-            new_dict[key] = new_df
+            new_dict[key] = new_df.dropna()
             
         else:    
             if 'DG-0001A' in key:
@@ -383,7 +383,7 @@ def LCS_bins(data_dict, dict_keys, old_keys_flip, flip, old_keys_bin):
                     for old, new in zip(old_keys_bin[1:], new_keys):
                         new_df[new] = data_dict[key][old]
 
-                new_dict[key] = new_df
+                new_dict[key] = new_df.dropna()
 
     return new_dict
 

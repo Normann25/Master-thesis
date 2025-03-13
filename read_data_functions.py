@@ -192,6 +192,8 @@ def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
                     df_name = str(date) + ' ' + file_name
                     if len(df_name.split('_')) > 1:
                         df_name = df_name.split('_') [0]
+
+                    new_df = new_df.dropna()
                     data[str(df_name)] = new_df.drop('index', axis = 1)
                     
             except ValueError:
