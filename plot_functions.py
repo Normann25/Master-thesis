@@ -682,3 +682,51 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
                 merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
                 plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+
+def LCS_calibration_plot(plotz, figsize, df):
+    
+    Conc_keys = df.keys()[1::2].to_list()
+    Time_keys = df.keys()[::2].to_list()
+
+    a_list = []
+    b_list = []
+    R2_list = []
+
+    fig, ax = plt.subplots(plotz-1, plotz-1,figsize=figsize)
+    for i in range(plotz):
+        for j in range(plotz-1):
+            if (i>j):
+                # ax = plt.subplot2grid((plotz-1, plotz-1), (i-1,j))
+                if j == 0:
+                    ax[i-1][j].set_ylabel(Conc_keys[i-1].split(' ')[1], fontsize = 8)
+                    ax[j][i-1].set_title(Conc_keys[i-1].split(' ')[1], fontsize = 8)
+
+                if j == i-1: # Time series of LCS and OPS data
+                    if 'OPS' in Time_keys[j]:
+                        c = 'r'
+                    else:
+                        c = 'tab:blue'
+
+                    ax[i-1][j].plot(df[Time_keys[j]], df[Conc_keys[j]], lw = 1, color = c)
+                    # ax.xaxis.set_ticklabels([])
+                    ax[i-1][j].xaxis.set_ticks([])
+
+                if j != i-1: # Linear fits LCS vs LCS, and LCS vs OPS
+                    print(f'{Conc_keys[i-1]} vs {Conc_keys[j]}:')
+
+                    x_plot = np.linspace(0, max(df[Conc_keys[i-1]]) + 100)
+                    
+                    a, b, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[i-1], Conc_keys[j]], None)
+                    ax[i-1][j].set(xlim = (x_plot[0], x_plot[-1]), ylim = (x_plot[0], x_plot[-1]))
+                    if 'OPS' in Conc_keys[i-1]:
+                        a_list.append(a)
+                        b_list.append(b)
+                        R2_list.append(R2)
+
+                    ax[j][i-1].plot(np.linspace(0, 20, 10), np.zeros(10), color = 'k', lw = '0.1')
+                    ax[j][i-1].xaxis.set_ticks([])
+                    ax[j][i-1].yaxis.set_ticks([])
+                    ax[j][i-1].text(10,10,f'R$^{2}$ = {R2:.2f}', ha = 'center', va = 'center', fontsize = 8)
+                    ax[j][i-1].set_ylim(0, 20)
+
+    return fig, a_list, b_list, R2_list
