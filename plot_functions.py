@@ -275,8 +275,6 @@ def plot_heatmap(ax, df, time, bin_edges, cutpoint, normed):
 
     if cutpoint != None:
         ax.hlines(cutpoint, new_time[0], new_time[-1], colors = 'white', linestyles = '--')
-        # ax.text(cutpoint[0] - 0.1*cutpoint[0], new_time[10], cutpoint[1], fontsize = 9, color = 'white')
-        # ax.text(cutpoint[0] + 0.1*cutpoint[0], new_time[10], cutpoint[2], fontsize = 9, color = 'white')
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
