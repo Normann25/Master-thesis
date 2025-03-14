@@ -15,6 +15,24 @@ def time_filtered_arrays(df, date, timestamps, conc_key):
     filtered_conc = conc[time_filter]
     return filtered_time, filtered_conc
 
+def get_corrected_LCS(path, uncorrected_LCS, device_id, correction):
+    corrected_LCS = {}
+
+    for key in uncorrected_LCS.keys():
+        if device_id in key:
+            df = uncorrected_LCS[key]
+
+            new_df = pd.DataFrame({'Time': df[df.keys()[0]]})
+
+            for conc in df.keys()[1:]:
+                new_df[conc] = np.array(df[conc])*correction[0] + correction[1]
+
+            new_df.to_csv(path + key + '.csv')
+
+            corrected_LCS[key] = new_df
+            
+    return corrected_LCS
+
 def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
     pd.options.mode.chained_assignment = None 
     
