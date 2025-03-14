@@ -25,7 +25,7 @@ def get_corrected_LCS(path, uncorrected_LCS, device_id, correction):
             new_df = pd.DataFrame({'Time': df[df.keys()[0]]})
 
             for conc in df.keys()[1:]:
-                new_df[conc] = np.array(df[conc])*correction[0] + correction[1]
+                new_df[conc] = np.array(df[conc])*correction
 
             new_df.to_csv(path + key + '.csv')
 
