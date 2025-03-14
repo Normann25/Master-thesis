@@ -47,7 +47,7 @@ def read_csv(path, parent_path, timelabel, skip, hour):
                     data_dict[name] = df
 
                 except KeyError:
-                    print(f'Failed to read file with separation: {sep} and decimal: {dec}')
+                    pass
 
     return data_dict
 
