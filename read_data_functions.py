@@ -156,7 +156,7 @@ def read_discmini(path, parent_path, file_names, separation):
     
     return new_dict
 
-def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
+def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3, corrected):
     """Read LCS data from CSV files in the specified path."""
     def LCS_csv(file):
         file_name = file.split('.') [0]
@@ -184,17 +184,21 @@ def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3):
             try:
                 df['Time'] = format_timestamps(df[time_label], format, "%d/%m/%Y %H:%M")
                 df['Time'] = df['Time'] + pd.Timedelta(hours = hour)
+                
+                if corrected:
+                    data[file_name] = df
 
-                df['Date'] = pd.to_datetime(df[time_label]).dt.date
-                for date in df['Date'].unique():
-                    mask = df['Date'] == date
-                    new_df = df[mask].reset_index()
-                    df_name = str(date) + ' ' + file_name
-                    if len(df_name.split('_')) > 1:
-                        df_name = df_name.split('_') [0]
+                else:
+                    df['Date'] = pd.to_datetime(df[time_label]).dt.date
+                    for date in df['Date'].unique():
+                        mask = df['Date'] == date
+                        new_df = df[mask].reset_index()
+                        df_name = str(date) + ' ' + file_name
+                        if len(df_name.split('_')) > 1:
+                            df_name = df_name.split('_')[0]
 
-                    new_df = new_df.dropna()
-                    data[str(df_name)] = new_df.drop('index', axis = 1)
+                        new_df = new_df.dropna()
+                        data[str(df_name)] = new_df.drop('index', axis = 1)
                     
             except ValueError:
                 pass
