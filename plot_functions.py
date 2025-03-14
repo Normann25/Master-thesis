@@ -730,3 +730,21 @@ def LCS_calibration_plot(plotz, figsize, df):
                     ax[j][i-1].set_ylim(0, 20)
 
     return fig, a_list, b_list, R2_list
+
+def get_corrected_LCS(path, uncorrected_LCS, device_id, correction):
+    corrected_LCS = {}
+
+    for key in uncorrected_LCS.keys():
+        if device_id in key:
+            df = uncorrected_LCS[key]
+
+            new_df = pd.DataFrame({'Time': df[df.keys()[1]]})
+
+            for conc in df.keys()[1:]:
+                new_df[conc] = np.array(df[conc])*correction[0] + correction[1]
+
+            new_df.to_csv(path + key + '.csv')
+
+            corrected_LCS[key] = new_df
+            
+    return corrected_LCS
