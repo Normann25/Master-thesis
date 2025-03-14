@@ -552,12 +552,12 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
         ax.tick_params(axis='both', labelsize=8)
         ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
 
-def plot_reference(ax, x_plot, data, keys, labels):
+def plot_reference(ax, x_plot, data, keys, labels, forced_zero):
     if labels == None:
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
+        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0, forced_zero)
         y_fit = a*x_plot + b
 
         ax.plot(x_plot, y_fit, color = 'k', lw = 1.2)
@@ -568,7 +568,7 @@ def plot_reference(ax, x_plot, data, keys, labels):
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0)
+        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0, forced_zero)
         y_fit = a*x_plot + b
 
         ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
@@ -585,7 +585,7 @@ def plot_reference(ax, x_plot, data, keys, labels):
 
     return a, b, squares, ndof, R2
 
-def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels):
+def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels, forced_zero):
 
     new_dict = {}
     for key in dict_keys:
@@ -602,9 +602,9 @@ def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_pl
         names.append(key.split('_')[0])
     merged = merged.dropna()
 
-    plot_reference(ax, x_plot, merged, dict_keys, axis_labels)
+    plot_reference(ax, x_plot, merged, dict_keys, axis_labels, forced_zero)
 
-def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels):
+def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels, forced_zero):
 
     # Convert start_time and end_time to datetime objects if they are strings
     start_time = pd.to_datetime(start_time)
@@ -630,9 +630,9 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
 
     x_plot = np.linspace(0, max(merged_df[dict_keys[0]]), 100)
     
-    plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels)
+    plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels, forced_zero)
 
-def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps):
+def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps, forced_zero):
     # Convert start_time and end_time to datetime objects if they are strings
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -655,7 +655,7 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 
             merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
-            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, forced_zero)
 
         if 'ma200' in key:
             time = pd.to_datetime(data[key][timelabel[0]]).round('60s')
@@ -664,7 +664,7 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 
             merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
-            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, forced_zero)
         
         if 'dm' not in key:
             if 'ma200' not in key:
@@ -681,16 +681,15 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
                 
                 merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
-                plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels)
+                plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, forced_zero)
 
-def LCS_calibration_plot(plotz, figsize, df):
+def LCS_calibration_plot(plotz, figsize, df, forced_zero):
     
     Conc_keys = df.keys()[1::2].to_list()
     Time_keys = df.keys()[::2].to_list()
 
     a_list = []
-    b_list = []
-    R2_list = []
+    R_list = []
 
     fig, ax = plt.subplots(plotz-1, plotz-1,figsize=figsize)
     for i in range(plotz):
@@ -716,17 +715,16 @@ def LCS_calibration_plot(plotz, figsize, df):
 
                     x_plot = np.linspace(0, max(df[Conc_keys[i-1]]) + 100)
                     
-                    a, b, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[i-1], Conc_keys[j]], None)
+                    a, b, squares, ndof, R = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[i-1], Conc_keys[j]], None, forced_zero)
                     ax[i-1][j].set(xlim = (x_plot[0], x_plot[-1]), ylim = (x_plot[0], x_plot[-1]))
                     if 'OPS' in Conc_keys[i-1]:
                         a_list.append(a)
-                        b_list.append(b)
-                        R2_list.append(R2)
+                        R_list.append(R)
 
                     ax[j][i-1].plot(np.linspace(0, 20, 10), np.zeros(10), color = 'k', lw = '0.1')
                     ax[j][i-1].xaxis.set_ticks([])
                     ax[j][i-1].yaxis.set_ticks([])
-                    ax[j][i-1].text(10,10,f'R$^{2}$ = {R2:.2f}', ha = 'center', va = 'center', fontsize = 8)
+                    ax[j][i-1].text(10,10,f'R = {R:.2f}', ha = 'center', va = 'center', fontsize = 8)
                     ax[j][i-1].set_ylim(0, 20)
 
-    return fig, a_list, b_list, R2_list
+    return fig, a_list, R_list

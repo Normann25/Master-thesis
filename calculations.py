@@ -108,66 +108,70 @@ def mean_conc_LCS(data, dict_keys, timelabel, date, timestamps, concentration, p
 
     return mean_df
 
-def linear_fit(x, y, a_guess, b_guess):
+def linear_fit(x, y, a_guess, b_guess, forced_zero):
 
     Npoints = len(y)
+    x, y = np.array(x), np.array(y)
 
-    def fit_func(x, a, b):
-        return b + (a * x)
+    if forced_zero:
+        def fit_func(x, a):
+            return (a * x)
+        
+        def least_squares(a) :
+            y_fit = fit_func(x, a)
+            squares = np.sum((y - y_fit)**2)
+            return squares
+        
+        least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
 
-    def least_squares(a, b) :
-        y_fit = fit_func(x, a, b)
-        squares = np.sum((y - y_fit)**2)
-        return squares
-    least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
+        # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
+        minuit = Minuit(least_squares, a = a_guess)
 
-    # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
-    minuit = Minuit(least_squares, a = a_guess, b = b_guess)
+        # Perform the actual fit:
+        minuit.migrad();
 
-    # Perform the actual fit:
-    minuit.migrad();
+        # Extract the fitting parameters:
+        a_fit = minuit.values['a']
 
-    # Extract the fitting parameters:
-    a_fit = minuit.values['a']
-    b_fit = minuit.values['b']
+        Nvar = 1                     # Number of variables 
+        Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
 
-    Nvar = 2                     # Number of variables 
-    Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
+        b_fit = 0
+        
+    else:
+        def fit_func(x, a, b):
+            return b + (a * x)
+        
+        def least_squares(a, b) :
+            y_fit = fit_func(x, a, b)
+            squares = np.sum((y - y_fit)**2)
+            return squares
+
+        least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
+
+        # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
+        minuit = Minuit(least_squares, a = a_guess, b = b_guess)
+
+        # Perform the actual fit:
+        minuit.migrad();
+
+        # Extract the fitting parameters:
+        a_fit = minuit.values['a']
+        b_fit = minuit.values['b']
+
+        Nvar = 2                     # Number of variables 
+        Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
 
     # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
     squares_fit = minuit.fval                          # The chi2 value
 
     # Calculate R2
-    def simple_model(b):
-        return b
+    R = (Npoints * np.sum(x * y) - np.sum(x) * np.sum(y)) / (np.sqrt(Npoints * np.sum(x**2) - (np.sum(x))**2)*np.sqrt(Npoints * np.sum(y**2) - (np.sum(y))**2))
 
-    def least_squares_simple(b) :
-        y_fit = simple_model(b)
-        squares = np.sum((y - y_fit)**2)
-        return squares
-    least_squares_simple.errordef = 1.0    # Chi2 definition (for Minuit)
-
-    # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
-    minuit_simple = Minuit(least_squares_simple, b = b_guess)
-
-    # Perform the actual fit:
-    minuit_simple.migrad();
-
-    # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
-    squares_simple = minuit_simple.fval                          # The chi2 value
-    if squares_simple == 0:
-        R2 = 'R2 not available'
-
-            # Print the fitted parameters
-        print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  {R2}")
-
-    if squares_simple != 0:
-        R2 = 1 - (squares_fit / squares_simple)
-
-        # Print the fitted parameters
-        print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R2={R2:6.6f}")
+    # Print the fitted parameters
+    print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R={R:6.6f}")
     
-    return a_fit, b_fit, squares_fit, Ndof_fit, R2
+    return a_fit, b_fit, squares_fit, Ndof_fit, R
 
 def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestamps):
     # Set 'Time' as the index
