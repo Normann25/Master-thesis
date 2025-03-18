@@ -713,7 +713,7 @@ def LCS_calibration_plot(plotz, figsize, df, forced_zero):
 
                     x_plot = np.linspace(0, max(df[Conc_keys[i-1]]) + 100)
                     
-                    a, b, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[i-1], Conc_keys[j]], None, forced_zero)
+                    a, b, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[j], Conc_keys[i-1]], None, forced_zero)
                     ax[i-1][j].set(xlim = (x_plot[0], x_plot[-1]), ylim = (x_plot[0], x_plot[-1]))
                     if 'OPS' in Conc_keys[i-1]:
                         a_list.append(a)
