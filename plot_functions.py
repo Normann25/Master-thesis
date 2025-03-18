@@ -555,12 +555,12 @@ def plot_reference(ax, x_plot, data, keys, labels, forced_zero):
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0, forced_zero)
+        a, b, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], 1, 0, forced_zero)
         y_fit = a*x_plot + b
 
         ax.plot(x_plot, y_fit, color = 'k', lw = 1.2)
 
-        ax.scatter(data[keys[0]], data[keys[1]], s=10, c='k')
+        ax.scatter(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], s=10, c='k')
 
     else:
         # Plot a scatter plot of the two concentrations
@@ -687,7 +687,7 @@ def LCS_calibration_plot(plotz, figsize, df, forced_zero):
     Time_keys = df.keys()[::2].to_list()
 
     a_list = []
-    R_list = []
+    R2_list = []
 
     fig, ax = plt.subplots(plotz-1, plotz-1,figsize=figsize)
     for i in range(plotz):
@@ -713,16 +713,16 @@ def LCS_calibration_plot(plotz, figsize, df, forced_zero):
 
                     x_plot = np.linspace(0, max(df[Conc_keys[i-1]]) + 100)
                     
-                    a, b, squares, ndof, R = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[i-1], Conc_keys[j]], None, forced_zero)
+                    a, b, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[i-1], Conc_keys[j]], None, forced_zero)
                     ax[i-1][j].set(xlim = (x_plot[0], x_plot[-1]), ylim = (x_plot[0], x_plot[-1]))
                     if 'OPS' in Conc_keys[i-1]:
                         a_list.append(a)
-                        R_list.append(R)
+                        R2_list.append(R2)
 
                     ax[j][i-1].plot(np.linspace(0, 20, 10), np.zeros(10), color = 'k', lw = '0.1')
                     ax[j][i-1].xaxis.set_ticks([])
                     ax[j][i-1].yaxis.set_ticks([])
-                    ax[j][i-1].text(10,10,f'R = {R:.2f}', ha = 'center', va = 'center', fontsize = 8)
+                    ax[j][i-1].text(10,10,f'R$^{2}$ = {R2:.2f}', ha = 'center', va = 'center', fontsize = 8)
                     ax[j][i-1].set_ylim(0, 20)
 
-    return fig, a_list, R_list
+    return fig, a_list, R2_list

@@ -166,12 +166,12 @@ def linear_fit(x, y, a_guess, b_guess, forced_zero):
     squares_fit = minuit.fval                          # The chi2 value
 
     # Calculate R2
-    R = (Npoints * np.sum(x * y) - np.sum(x) * np.sum(y)) / (np.sqrt(Npoints * np.sum(x**2) - (np.sum(x))**2)*np.sqrt(Npoints * np.sum(y**2) - (np.sum(y))**2))
+    R2 = ((Npoints * np.sum(x * y) - np.sum(x) * np.sum(y)) / (np.sqrt(Npoints * np.sum(x**2) - (np.sum(x))**2)*np.sqrt(Npoints * np.sum(y**2) - (np.sum(y))**2)))**2
 
     # Print the fitted parameters
-    print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R={R:6.6f}")
+    print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R={R2:6.6f}")
     
-    return a_fit, b_fit, squares_fit, Ndof_fit, R
+    return a_fit, b_fit, squares_fit, Ndof_fit, R2
 
 def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestamps):
     # Set 'Time' as the index
