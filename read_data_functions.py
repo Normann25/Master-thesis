@@ -116,7 +116,7 @@ def read_csv_BC(path, parent_path, hr):
 
                     for key in df.keys():
                         if 'BCc' in key:
-                            df[key][df[key] < 0] = 0
+                            # df[key][df[key] < 0] = 0
                             df[key] = df[key] / 1000
 
                 data_dict[name] = df

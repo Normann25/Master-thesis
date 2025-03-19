@@ -286,9 +286,12 @@ def plot_heatmap(ax, df, time, bin_edges, cutpoint, normed):
     ax.set_ylabel("Dp / $\mu$m")
     return ax, p1
 
-def plot_total(ax, df):
-    total_conc = df.iloc[:,1:].sum(axis=1)
-    ax.plot(df['Time'], total_conc, lw = 1, color = 'r')
+def plot_total(ax, df, conc_key, clr, lstyle):
+    if conc_key == None:
+        total_conc = df.iloc[:,1:].sum(axis=1)
+        ax.plot(df['Time'], total_conc, lw = 1, color = 'r')
+    else:
+        ax.plot(df['Time'], df[conc_key], lw = 1, color = clr, ls = lstyle)
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
@@ -322,8 +325,8 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
         ax1, p1 = plot_heatmap(ax[0][0], new_df_number, filtered_time, bin_edges, cutpoint, normed)
         ax2, p2 = plot_heatmap(ax[0][1], new_df_mass, filtered_time, bin_edges, cutpoint, normed)
 
-        ax3 = plot_total(ax[1][0], new_df_number)
-        ax4 = plot_total(ax[1][1], new_df_mass)
+        ax3 = plot_total(ax[1][0], new_df_number, None, None, None)
+        ax4 = plot_total(ax[1][1], new_df_mass, None, None, None)
 
         # Insert coloarbar and label it
         col1 = fig.colorbar(p1, ax=ax1)
@@ -357,7 +360,7 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
         ax1, p1 = plot_heatmap(ax[0], new_df, filtered_time, bin_edges, cutpoint, normed)
 
-        ax2 = plot_total(ax[1], new_df)
+        ax2 = plot_total(ax[1], new_df, None, None, None)
 
         # Insert coloarbar and label it
         col = fig.colorbar(p1, ax=ax1)
