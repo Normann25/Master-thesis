@@ -13,22 +13,22 @@ def linear(x, a, b):
 def gauss(x, p, mu, sigma):
     return p*stats.norm.pdf(x, mu, sigma)
 
-def d_gauss(x, p1, p2, mu1, sigma1, mu2, sigma2):
+def d_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
     return p1*stats.norm.pdf(x, mu1, sigma1) + p2*stats.norm.pdf(x, mu2, sigma2)
 
-def t_gauss(x, p1, p2, p3, mu1, sigma1, mu2, sigma2, mu3, sigma3):
+def t_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
     return p1*stats.norm.pdf(x, mu1, sigma1) + p2*stats.norm.pdf(x, mu2, sigma2) + p3*stats.norm.pdf(x, mu3, sigma3)
 
 def lognorm(x, p, mu, sigma):
     return p*stats.lognorm.pdf(x, loc = mu, s = sigma)
 
-def d_loggauss(x, p1, p2, mu1, sigma1, mu2, sigma2):
+def d_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2)
 
-def t_loggauss(x, p1, p2, p3, mu1, sigma1, mu2, sigma2, mu3, sigma3):
+def t_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2) + p3*stats.lognorm.pdf(x, scale = mu3, s = sigma3)
 
-def lognorm_gauss(x, p1, p2, mu1, sigma1, mu2, sigma2):
+def lognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
     return p1*stats.lognorm.pdf(x, loc = mu1, s = sigma1) + p2*stats.norm.pdf(x, mu2, sigma2)
 #%%
 def time_filtered_arrays(df, date, timestamps, conc_key):
