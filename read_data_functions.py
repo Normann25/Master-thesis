@@ -119,6 +119,8 @@ def read_csv_BC(path, parent_path, hr):
                             # df[key][df[key] < 0] = 0
                             df[key] = df[key] / 1000
 
+                    df = df.dropna()
+
                 data_dict[name] = df
 
     return data_dict 

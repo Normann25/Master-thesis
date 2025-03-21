@@ -553,13 +553,16 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
         ax.tick_params(axis='both', labelsize=8)
         ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
 
-def plot_reference(ax, x_plot, data, keys, labels, forced_zero):
+def plot_reference(ax, x_plot, data, keys, labels, fitfunc, forced_zero):
     if labels == None:
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-        a, b, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], 1, 0, forced_zero)
-        y_fit = a*x_plot + b
+        if forced_zero:
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1)
+        else:
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1, b_guess = 0)
+        y_fit = fitfunc(x_plot, *fit_params)
 
         ax.plot(x_plot, y_fit, color = 'k', lw = 1.2)
 
@@ -569,8 +572,11 @@ def plot_reference(ax, x_plot, data, keys, labels, forced_zero):
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-        a, b, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], 1, 0, forced_zero)
-        y_fit = a*x_plot + b
+        if forced_zero:
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1)
+        else:
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1, b_guess = 0)
+        y_fit = fitfunc(x_plot, *fit_params)
 
         ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
 
@@ -584,9 +590,9 @@ def plot_reference(ax, x_plot, data, keys, labels, forced_zero):
 
         ax.legend(fontsize = 8)
 
-    return a, b, squares, ndof, R2
+    return fit_params, squares, ndof, R2
 
-def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels, forced_zero):
+def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels, fitfunc):
 
     new_dict = {}
     for key in dict_keys:
@@ -603,9 +609,9 @@ def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_pl
         names.append(key.split('_')[0])
     merged = merged.dropna()
 
-    plot_reference(ax, x_plot, merged, dict_keys, axis_labels, forced_zero)
+    plot_reference(ax, x_plot, merged, dict_keys, axis_labels, fitfunc, False)
 
-def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels, forced_zero):
+def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels, fitfunc):
 
     # Convert start_time and end_time to datetime objects if they are strings
     start_time = pd.to_datetime(start_time)
@@ -631,9 +637,9 @@ def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentra
 
     x_plot = np.linspace(0, max(merged_df[dict_keys[0]]), 100)
     
-    plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels, forced_zero)
+    plot_reference(ax, x_plot, merged_df, dict_keys, axis_labels, fitfunc, False)
 
-def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps, forced_zero):
+def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabel, x_plot, axis_labels, timestamps, fitfunc):
     # Convert start_time and end_time to datetime objects if they are strings
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -656,7 +662,7 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 
             merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
-            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, forced_zero)
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, fitfunc, False)
 
         if 'ma200' in key:
             time = pd.to_datetime(data[key][timelabel[0]]).round('60s')
@@ -665,7 +671,7 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
 
             merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
-            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, forced_zero)
+            plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, fitfunc, False)
         
         if 'dm' not in key:
             if 'ma200' not in key:
@@ -682,9 +688,9 @@ def instrument_comparison(ax, data, data_keys, ref_data, concentration, timelabe
                 
                 merged = pd.merge(new_df, ref_df, on = timelabel[0], how = 'inner')
 
-                plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, forced_zero)
+                plot_reference(ax[i], x_plot, merged, ['Reference', key], axis_labels, fitfunc, False)
 
-def LCS_calibration_plot(plotz, figsize, df, forced_zero):
+def LCS_calibration_plot(plotz, figsize, df, fitfunc):
     
     Conc_keys = df.keys()[1::2].to_list()
     Time_keys = df.keys()[::2].to_list()
@@ -716,10 +722,11 @@ def LCS_calibration_plot(plotz, figsize, df, forced_zero):
 
                     x_plot = np.linspace(0, max(df[Conc_keys[i-1]]) + 100)
                     
-                    a, b, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[j], Conc_keys[i-1]], None, forced_zero)
+                    fit_params, squares, ndof, R2 = plot_reference(ax[i-1][j], x_plot, df, [Conc_keys[j], Conc_keys[i-1]], None, fitfunc, True)
+                    print(f'f(x) = {fit_params[0]}x, R2 = {R2}')
                     ax[i-1][j].set(xlim = (x_plot[0], x_plot[-1]), ylim = (x_plot[0], x_plot[-1]))
                     if 'OPS' in Conc_keys[i-1]:
-                        a_list.append(a)
+                        a_list.append(fit_params[0])
                         R2_list.append(R2)
 
                     ax[j][i-1].plot(np.linspace(0, 20, 10), np.zeros(10), color = 'k', lw = '0.1')

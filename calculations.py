@@ -2,6 +2,13 @@ import numpy as np
 import pandas as pd
 from iminuit import Minuit
 #%%
+# Fit functions
+def linear_forced_zero(x, a):
+    return (a * x)
+
+def linear(x, a, b):
+    return b + (a * x)
+#%%
 def time_filtered_arrays(df, date, timestamps, conc_key):
     start_time = pd.to_datetime(date + ' ' + timestamps[0])
     end_time = pd.to_datetime(date + ' ' + timestamps[1])
@@ -108,70 +115,33 @@ def mean_conc_LCS(data, dict_keys, timelabel, date, timestamps, concentration, p
 
     return mean_df
 
-def linear_fit(x, y, a_guess, b_guess, forced_zero):
+def linear_fit(x, y, fitfunc, **kwargs):
 
     Npoints = len(y)
     x, y = np.array(x), np.array(y)
+    
+    def obt(*args):
+        squares = np.sum(((y-fitfunc(x, *args)))**2)
+        return squares
 
-    if forced_zero:
-        def fit_func(x, a):
-            return (a * x)
-        
-        def least_squares(a) :
-            y_fit = fit_func(x, a)
-            squares = np.sum((y - y_fit)**2)
-            return squares
-        
-        least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
+    minuit = Minuit(obt, **kwargs, name = [*kwargs]) # Setup; obtimization function, initial variable guesses, names of variables. 
+    minuit.errordef = 1 # needed for likelihood fits. No explaination in the documentation.
 
-        # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
-        minuit = Minuit(least_squares, a = a_guess)
+    minuit.migrad() # Compute the fit
+    valuesfit = np.array(minuit.values, dtype = np.float64) # Convert to numpy
+    errorsfit = np.array(minuit.errors, dtype = np.float64) # Convert to numpy
+    # if not minuit.valid: # Give custom error if the fit did not converge
+    #     print("!!! Fit did not converge !!!\n!!! Give better initial parameters !!!")
 
-        # Perform the actual fit:
-        minuit.migrad()
+    Nvar = len(kwargs)           # Number of variables
+    Ndof_fit = len(x) - Nvar
 
-        # Extract the fitting parameters:
-        a_fit = minuit.values['a']
-
-        Nvar = 1                     # Number of variables 
-        Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
-
-        b_fit = 0
-        
-    else:
-        def fit_func(x, a, b):
-            return b + (a * x)
-        
-        def least_squares(a, b) :
-            y_fit = fit_func(x, a, b)
-            squares = np.sum((y - y_fit)**2)
-            return squares
-
-        least_squares.errordef = 1.0    # Chi2 definition (for Minuit)
-
-        # Here we let Minuit know, what to minimise, how, and with what starting parameters:   
-        minuit = Minuit(least_squares, a = a_guess, b = b_guess)
-
-        # Perform the actual fit:
-        minuit.migrad()
-
-        # Extract the fitting parameters:
-        a_fit = minuit.values['a']
-        b_fit = minuit.values['b']
-
-        Nvar = 2                     # Number of variables 
-        Ndof_fit = Npoints - Nvar    # Number of degrees of freedom = Number of data points - Number of variables
-
-    # Get the minimal value obtained for the quantity to be minimised (here the Chi2)
-    squares_fit = minuit.fval                          # The chi2 value
+    squares_fit = minuit.fval  
 
     # Calculate R2
-    R2 = ((Npoints * np.sum(x * y) - np.sum(x) * np.sum(y)) / (np.sqrt(Npoints * np.sum(x**2) - (np.sum(x))**2)*np.sqrt(Npoints * np.sum(y**2) - (np.sum(y))**2)))**2
+    R2 = ((Npoints * np.sum(x * y) - np.sum(x) * np.sum(y)) / (np.sqrt(Npoints * np.sum(x**2) - (np.sum(x))**2)*np.sqrt(Npoints * np.sum(y**2) - (np.sum(y))**2)))**2 
 
-    # Print the fitted parameters
-    print(f"Fit: a={a_fit:6.6f}  b={b_fit:5.3f}  R2={R2:6.6f}")
-    
-    return a_fit, b_fit, squares_fit, Ndof_fit, R2
+    return valuesfit, errorsfit, Ndof_fit, squares_fit, R2
 
 def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestamps):
     # Set 'Time' as the index
