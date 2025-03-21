@@ -736,3 +736,34 @@ def LCS_calibration_plot(plotz, figsize, df, fitfunc):
                     ax[j][i-1].set_ylim(0, 20)
 
     return fig, a_list, R2_list
+
+def MA_correction_single(ax, xval, yval, guess, lbl):
+    
+    fit_params, fit_errors, squares, ndof, R2 = linear_fit(xval, yval, linear, a_guess = guess[0], b_guess = guess[1])
+    a, b = fit_params[0], fit_params[1]
+    y_fit = a*xval + b
+
+    ax.plot(xval, y_fit, lw = 1.2, label = None)
+    ax.scatter(xval, yval, s = 10, alpha = 0.5, label = lbl)
+
+    return a, b, R2
+
+def MA_correction_multi(ax, df, keys, xlabels, guess, lbl):
+    a_array = np.zeros(len(keys))
+    b_array = np.zeros(len(keys))
+    R2_array = np.zeros(len(keys))
+
+    for i, key in enumerate(keys):
+        delta = np.array(df[key][1:]) - np.array(df[key][:-1])
+
+        a, b, R2 = MA_correction_single(ax[0][i], df[key], df['IR BCc'], guess[i], lbl)
+        print(f'{key}: f(x) = {a}x + {b}, R2 = {R2}')
+        a_array[i] += a
+        b_array[i] += b
+        R2_array[i] += R2
+        ax[0][i].set(xlabel = xlabels[0][i])
+
+        ax[1][i].scatter(delta, df['IR BCc'][1:], s = 10, alpha = 0.5, label = lbl)
+        ax[1][i].set(xlabel = xlabels[1][i])
+
+    return a_array, b_array, R2_array
