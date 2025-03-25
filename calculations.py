@@ -73,7 +73,7 @@ def get_corrected(path, uncorrected, device_id, correction, data_type):
                     'Sample dewpoint (C)': df['Sample dewpoint (C)']})
                 
                 for i, conc in enumerate(conc_keys):
-                    DP_correction = correction[i][0]*np.array(df['Sample dewpoint (C)']) + correction[i][1]
+                    DP_correction = correction[0][i]*np.array(df['Sample dewpoint (C)']) + correction[1][i]
 
                     new_df[conc] = np.array(df[conc]) - DP_correction
 
