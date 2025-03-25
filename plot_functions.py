@@ -748,7 +748,7 @@ def MA_correction_single(ax, xval, yval, guess, lbl):
 
     return a, b, R2
 
-def MA_correction_multi(ax, df, keys, xlabels, guess, lbl):
+def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
     a_array = np.zeros(len(keys))
     b_array = np.zeros(len(keys))
     R2_array = np.zeros(len(keys))
@@ -756,7 +756,7 @@ def MA_correction_multi(ax, df, keys, xlabels, guess, lbl):
     for i, key in enumerate(keys):
         delta = np.array(df[key][1:]) - np.array(df[key][:-1])
 
-        a, b, R2 = MA_correction_single(ax[0][i], df[key], df['IR BCc'], guess[i], lbl)
+        a, b, R2 = MA_correction_single(ax[0][i], df[key], df[conc], guess[i], lbl)
         print(f'{key}: f(x) = {a}x + {b}, R2 = {R2}')
         a_array[i] += a
         b_array[i] += b
