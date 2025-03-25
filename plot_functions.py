@@ -757,7 +757,7 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
         delta = np.array(df[key][1:]) - np.array(df[key][:-1])
 
         a, b, R2 = MA_correction_single(ax[0][i], df[key], df[conc], guess[i], lbl)
-        print(f'{key}: f(x) = {a}x + {b}, R2 = {R2}')
+        print(f'{conc} vs {key}: f(x) = {a}x + {b}, R2 = {R2}')
         a_array[i] += a
         b_array[i] += b
         R2_array[i] += R2
