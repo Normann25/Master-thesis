@@ -763,7 +763,7 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
         R2_array[i] += R2
         ax[0][i].set(xlabel = xlabels[0][i])
 
-        ax[1][i].scatter(delta, df['IR BCc'][1:], s = 10, alpha = 0.5, label = lbl)
+        ax[1][i].scatter(delta, df[conc][1:], s = 10, alpha = 0.5, label = lbl)
         ax[1][i].set(xlabel = xlabels[1][i])
 
     return a_array, b_array, R2_array
