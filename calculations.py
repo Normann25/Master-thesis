@@ -44,23 +44,44 @@ def time_filtered_arrays(df, date, timestamps, conc_key):
     filtered_conc = conc[time_filter]
     return filtered_time, filtered_conc
 
-def get_corrected_LCS(path, uncorrected_LCS, device_id, correction):
-    corrected_LCS = {}
+def get_corrected(path, uncorrected, device_id, correction, data_type):
+    corrected = {}
 
-    for key in uncorrected_LCS.keys():
+    for key in uncorrected.keys():
         if device_id in key:
-            df = uncorrected_LCS[key]
+            df = uncorrected[key]
 
-            new_df = pd.DataFrame({'Time': df[df.keys()[0]]})
+            if data_type == 'LCS':
 
-            for conc in df.keys()[1:]:
-                new_df[conc] = np.array(df[conc])*correction
+                new_df = pd.DataFrame({'Time': df[df.keys()[0]]})
 
-            new_df.to_csv(path + key + '.csv')
+                for conc in df.keys()[1:]:
+                    new_df[conc] = np.array(df[conc])*correction
 
-            corrected_LCS[key] = new_df
+                new_df.to_csv(path + key + '.csv')
+
+                corrected[key] = new_df
+
+            if data_type == 'MA200':
+
+                conc_keys= ['UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc', 'IR BCc']
+                
+                new_df = pd.DataFrame({
+                    'Time': df['Time'], 
+                    'Sample temp (C)': df['Sample temp (C)'],
+                    'Sample RH (%)': df['Sample RH (%)'],
+                    'Sample dewpoint (C)': df['Sample dewpoint (C)']})
+                
+                for i, conc in enumerate(conc_keys):
+                    DP_correction = correction[i][0]*np.array(df['Sample dewpoint (C)']) + correction[i][1]
+
+                    new_df[conc] = np.array(df[conc]) - DP_correction
+
+                    new_df.to_csv(path + key + '.csv')
+
+                    corrected[key] = new_df
             
-    return corrected_LCS
+    return corrected
 
 def get_mean_conc(data, dict_keys, timelabel, timestamps, concentration, path):
     pd.options.mode.chained_assignment = None 
