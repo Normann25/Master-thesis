@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from iminuit import Minuit
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.metrics import davies_bouldin_score
 #%%
 # Fit functions
 def linear_forced_zero(x, a):
@@ -541,3 +545,50 @@ def Partector_Ceff(Psize):
     Collection_efficiency = (0.43837287*Psize**(-0.48585362))
     
     return Collection_efficiency 
+
+def K_means_optimal(Kmeans_data,max_cluster=20):
+    fig,axs = plt.subplots(ncols=3, figsize = (7, 4))
+    
+    # Compute WCSS for different values of k
+    wcss = []
+    for k in range(1, max_cluster):  # Test k values from 1 to 10
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(Kmeans_data)
+        wcss.append(kmeans.inertia_)
+    
+    # Plot the Elbow Curve
+    axs[0].plot(range(1, max_cluster), wcss, marker='o')
+    axs[0].set_title('Elbow Method \n Find point where plot bends')
+    axs[0].set_xlabel('Number of Clusters (k)')
+    axs[0].set_ylabel('Within-Cluster Sum of Squares (WCSS)')
+    
+    silhouette_scores = []
+    for k in range(2, max_cluster):  # Test k values from 2 to cluster (Silhouette requires at least 2 clusters)
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        labels = kmeans.fit_predict(Kmeans_data)
+        score = silhouette_score(Kmeans_data, labels)
+        silhouette_scores.append(score)
+    
+    # Plot the Silhouette Scores
+    axs[1].plot(range(2, max_cluster), silhouette_scores, marker='o')
+    axs[1].set_title('Silhouette Score Method, \n Close to 1 is good')
+    axs[1].set_xlabel('Number of Clusters (k)')
+    axs[1].set_ylabel('Silhouette Score')
+    
+    db_scores = []
+    for k in range(2, max_cluster):  # Test k values from 2 to 10
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        labels = kmeans.fit_predict(Kmeans_data)
+        score = davies_bouldin_score(Kmeans_data, labels)
+        db_scores.append(score)
+    
+    # Plot the Davies-Bouldin Scores
+    axs[2].plot(range(2, max_cluster), db_scores, marker='o')
+    axs[2].set_title('Davies-Bouldin Index Method \n Small values are good')
+    axs[2].set_xlabel('Number of Clusters (k)')
+    axs[2].set_ylabel('Davies-Bouldin Score')
+
+    fig.tight_layout()
+    plt.show()
+
+    return fig
