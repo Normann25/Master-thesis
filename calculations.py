@@ -36,8 +36,13 @@ def lognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
     return p1*stats.lognorm.pdf(x, loc = mu1, s = sigma1) + p2*stats.norm.pdf(x, mu2, sigma2)
 #%%
 def time_filtered_arrays(df, date, timestamps, conc_key):
-    start_time = pd.to_datetime(date + ' ' + timestamps[0])
-    end_time = pd.to_datetime(date + ' ' + timestamps[1])
+    if date == None:
+        start_time = pd.to_datetime(timestamps[0])
+        end_time = pd.to_datetime(timestamps[1])  
+    else:
+        start_time = pd.to_datetime(f'{date} {timestamps[0]}')
+        end_time = pd.to_datetime(f'{date} {timestamps[1]}')
+        
     time = pd.to_datetime(df['Time'])
 
     time_filter = (time >= start_time) & (time <= end_time)

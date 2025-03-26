@@ -34,8 +34,8 @@ def read_csv(path, parent_path, timelabel, skip, hour):
 
     for file in files:
         if '.csv' or '.CSV' in file:
-            separations = [',', ';', ';']
-            decimal_sep = ['.', ',', '.']
+            separations = [',', ';']
+            decimal_sep = ['.', ',']
             name = file.split('.')[0]
             for sep, dec in zip(separations, decimal_sep):
                 try:
