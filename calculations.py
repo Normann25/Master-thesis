@@ -24,7 +24,7 @@ def t_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
     return p1*stats.norm.pdf(x, mu1, sigma1) + p2*stats.norm.pdf(x, mu2, sigma2) + p3*stats.norm.pdf(x, mu3, sigma3)
 
 def lognorm(x, p, mu, sigma):
-    return p*stats.lognorm.pdf(x, loc = mu, s = sigma)
+    return p*stats.lognorm.pdf(x, scale = mu, s = sigma)
 
 def d_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2)
@@ -33,7 +33,7 @@ def t_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2) + p3*stats.lognorm.pdf(x, scale = mu3, s = sigma3)
 
 def lognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
-    return p1*stats.lognorm.pdf(x, loc = mu1, s = sigma1) + p2*stats.norm.pdf(x, mu2, sigma2)
+    return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.norm.pdf(x, mu2, sigma2)
 #%%
 def time_filtered_arrays(df, date, timestamps, conc_key):
     if date == None:
@@ -42,7 +42,7 @@ def time_filtered_arrays(df, date, timestamps, conc_key):
     else:
         start_time = pd.to_datetime(f'{date} {timestamps[0]}')
         end_time = pd.to_datetime(f'{date} {timestamps[1]}')
-        
+
     time = pd.to_datetime(df['Time'])
 
     time_filter = (time >= start_time) & (time <= end_time)
