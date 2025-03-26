@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from iminuit import Minuit
 sys.path.append('..')
 from calculations import *
+from ExternalFunctions import *
 #%%
 def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
@@ -767,3 +768,27 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
         ax[1][i].set(xlabel = xlabels[1][i])
 
     return a_array, b_array, R2_array
+
+def AAE_hist(ax, df, timestamps, Nbins, fit_func, initial_guess):
+
+    AAE = AAE_calc(df, timestamps)
+
+    xmin, xmax = min(AAE), max(AAE)
+    binwidth = (xmax - xmin) / Nbins
+
+    ax.hist(AAE, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = 'r')
+
+    fit_object = UnbinnedLH(fit_func, AAE, extended=True)
+    minuit = Minuit(fit_object, **initial_guess)
+    minuit.errordef = 0.5
+    minuit.migrad();
+    print(minuit.values)
+
+    x_fit = np.linspace(xmin, xmax, 1000)
+    y_fit = fit_func(x_fit, *minuit.values) * binwidth
+    ax.plot(x_fit, y_fit, ls = '--', color = 'k', lw = 1, label = 'Fit')
+
+    ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
+    ax.legend(fontsize = 8)
+
+    return AAE, np.array(minuit.values, dtype = np.float64) 

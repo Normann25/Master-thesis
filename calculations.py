@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import davies_bouldin_score
+from ExternalFunctions import *
 #%%
 # Fit functions
 def linear_forced_zero(x, a):
@@ -453,6 +454,30 @@ def merge_dicts(*dict_args):
     for dictionary in dict_args:
         result.update(dictionary)
     return result
+
+def AAE_calc(df, timestamps):
+
+    start_time = pd.to_datetime(timestamps[0])
+    end_time = pd.to_datetime(timestamps[1]) 
+
+    time = pd.to_datetime(df['Time'])
+    time_filter = (time >= start_time) & (time <= end_time)
+
+    filtered_df = df[time_filter]
+
+    # Mass absorbtion cross section (MAC)
+    MAC_375 = 24.069 # m**2/g, UV
+    MAC_880 = 10.120 # m**2/g, IR
+    Cref = 1.3 # m**2/g, mass absorption coefficient
+
+    # Specific attenuation cross sections for UV and IR
+    abs_375 = np.array(filtered_df['UV BCc'])*10**(-9)*(MAC_375/Cref) # UV
+    abs_880 = np.array(filtered_df['IR BCc'])*10**(-9)*(MAC_880/Cref) # IR
+
+    # Absorption Ångstrøm exponent (AAE)
+    AAE = -(np.log(abs_880/abs_375)/np.log(880/375))
+
+    return AAE
 
 # Functions written by Anders Brostrøm
 def Partector_TEM_sampling(Partector_data, ignore_samplings_below=0):
