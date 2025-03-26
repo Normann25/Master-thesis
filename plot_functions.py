@@ -772,6 +772,7 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
 def AAE_hist(ax, df, timestamps, Nbins, fit_func, initial_guess):
 
     AAE = AAE_calc(df, timestamps)
+    AAE = AAE[np.isfinite(AAE)]
 
     xmin, xmax = min(AAE), max(AAE)
     binwidth = (xmax - xmin) / Nbins
