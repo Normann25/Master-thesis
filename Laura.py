@@ -85,9 +85,9 @@ def read_LCS_data_OPC5000(path, time_label, names, sep):
                df = pd.read_table(f, sep = sep)
 
                df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
-               keys = ['PM5000S_2_PN0.3', 'PM5000S_2_PN0.5','PM5000S_2_PN1','PM5000S_2_PN2.5','PM5000S_2_PN5','PM5000S_2_PN10']
+               keys = ['PN<1','PN<2.5','PN<5','PN<10']
                for key in keys: 
-                   df[key] = pd.to_numeric(df[key]) / 1000
+                   df[key] = pd.to_numeric(df[key])
 
             data_dict[name] =df 
 

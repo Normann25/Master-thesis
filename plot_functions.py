@@ -115,7 +115,7 @@ def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration
 
     ax.legend(frameon = False)
     ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
-    ax.set_ylabel(ylabel, fontsize = 8)
+    ax.set_ylabel(ylabel, fontsize = 11)
 
 def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
@@ -135,3 +135,6 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
 
     
     fig.supxlabel('Time', fontsize=10)
+
+
+
