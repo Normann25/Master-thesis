@@ -554,6 +554,39 @@ def plot_running_mean(fig, ax, df, bins, bin_edges, axis_labels, run_length, bac
         ax.tick_params(axis='both', labelsize=8)
         ax.set(xlabel=axis_labels[0], ylabel=axis_labels[1], xscale='log')
 
+def plot_fitted_mean(ax, timestamps, df, df_keys, timelabel, inst_error, bin_means, bin_edges, cut_point, fitfunc, colors, initial_guess):
+
+    mean, std, error = bin_mean(timestamps, df, df_keys, timelabel, inst_error)
+
+    if bin_edges != None:
+        dlogDp = np.log10(bin_edges[1:])-np.log10(bin_edges[:-1])
+        mean = mean/dlogDp
+        std=std/dlogDp
+        error=error/dlogDp
+
+    abs_error = [abs(error) for error in error]
+
+    if cut_point == None:
+        ax.errorbar(bin_means, mean, abs_error, ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=colors[0], lw = 1.2)
+    else:
+        df_mean = pd.DataFrame({'Bin mean': bin_means, 'Concentration': mean, 'Error': abs_error})
+        
+        lower_cut = df_mean['Bin mean'] < cut_point
+        upper_cut = df_mean['Bin mean'] > cut_point
+
+        ax.errorbar(df_mean['Bin mean'][lower_cut], df_mean['Concentration'][lower_cut], df_mean['Error'][lower_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=colors[0], lw = 1.2)
+        ax.errorbar(df_mean['Bin mean'][upper_cut], df_mean['Concentration'][upper_cut], df_mean['Error'][upper_cut], ecolor='k', elinewidth=0.5, capsize=2, capthick=0.5, color=colors[0], lw = 1.2)
+
+    bin_mean_fit = np.linspace(min(bin_means), max(bin_means), 1000)
+
+    fit_params, fit_errors, Prob = Chi2_fit(bin_means, mean, error, fitfunc, **initial_guess)
+    ax.plot(bin_mean_fit, fitfunc(bin_mean_fit, *fit_params[:]), color = colors[1], ls = '--', lw = 1)
+
+    print(fit_params)
+    print(Prob)
+
+    return ax, fit_params, fit_errors, df_mean
+
 def plot_reference(ax, x_plot, data, keys, labels, fitfunc, forced_zero):
     if labels == None:
         # Plot a scatter plot of the two concentrations
