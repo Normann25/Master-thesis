@@ -33,8 +33,14 @@ def d_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
 def t_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2) + p3*stats.lognorm.pdf(x, scale = mu3, s = sigma3)
 
+def q_loggauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3, p4, mu4, sigma4):
+    return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2) + p3*stats.lognorm.pdf(x, scale = mu3, s = sigma3) + p4*stats.lognorm.pdf(x, scale = mu4, s = sigma4)
+
 def lognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.norm.pdf(x, mu2, sigma2)
+
+def dlognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
+    return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2) + p3*stats.norm.pdf(x, mu3, sigma3)
 #%%
 def time_filtered_arrays(df, date, timestamps, conc_key):
     if date == None:
@@ -195,6 +201,28 @@ def linear_fit(x, y, fitfunc, **kwargs):
     R2 = ((Npoints * np.sum(x * y) - np.sum(x) * np.sum(y)) / (np.sqrt(Npoints * np.sum(x**2) - (np.sum(x))**2)*np.sqrt(Npoints * np.sum(y**2) - (np.sum(y))**2)))**2 
 
     return valuesfit, errorsfit, Ndof_fit, squares_fit, R2
+
+def Chi2_fit(x, y, yerr, fitfunc, **kwargs):
+    # Written by Philip Kofoed-Djursner
+    
+    def obt(*args):
+        chi2 = np.sum(((y-fitfunc(x, *args))/yerr)**2)
+        return chi2
+
+    minuit = Minuit(obt, **kwargs, name = [*kwargs]) # Setup; obtimization function, initial variable guesses, names of variables. 
+    minuit.errordef = 1 # needed for likelihood fits. No explaination in the documentation.
+
+    minuit.migrad() # Compute the fit
+    valuesfit = np.array(minuit.values, dtype = np.float64) # Convert to numpy
+    errorsfit = np.array(minuit.errors, dtype = np.float64) # Convert to numpy
+
+    Nvar = len(kwargs)           # Number of variables
+    Ndof_fit = len(x) - Nvar
+
+    Chi2_fit = minuit.fval                          # The chi2 value
+    Prob_fit = stats.chi2.sf(Chi2_fit, Ndof_fit) 
+
+    return valuesfit, errorsfit, Prob_fit
 
 def running_mean(df, dictkey, concentration, timelabel, interval, wndw, timestamps):
     # Set 'Time' as the index
