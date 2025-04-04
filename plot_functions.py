@@ -588,28 +588,31 @@ def plot_fitted_mean(ax, timestamps, df, df_keys, timelabel, inst_error, bin_mea
     return ax, fit_params, fit_errors, df_mean
 
 def plot_reference(ax, x_plot, data, keys, labels, fitfunc, forced_zero):
+
     if labels == None:
+        x_data = data.sort_values(by = [keys[0]])[keys[0]]
+        y_data = data.sort_values(by = [keys[1]])[keys[1]]
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
         if forced_zero:
-            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1)
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(x_data, y_data, fitfunc, a_guess = 1)
         else:
-            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1, b_guess = 0)
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(x_data, y_data, fitfunc, a_guess = 1, b_guess = 0)
         y_fit = fitfunc(x_plot, *fit_params)
 
         ax.plot(x_plot, y_fit, color = 'k', lw = 1.2)
 
-        ax.scatter(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], s=10, c='k')
+        ax.scatter(x_data, y_data, s=10, c='k')
 
     else:
         # Plot a scatter plot of the two concentrations
         ax.plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
         if forced_zero:
-            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1)
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], fitfunc, a_guess = 1)
         else:
-            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data.sort_values(by = [keys[0]])[keys[0]], data.sort_values(by = [keys[1]])[keys[1]], fitfunc, a_guess = 1, b_guess = 0)
+            fit_params, fit_errors, squares, ndof, R2 = linear_fit(data[keys[0]], data[keys[1]], fitfunc, a_guess = 1, b_guess = 0)
         y_fit = fitfunc(x_plot, *fit_params)
 
         ax.plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
@@ -643,7 +646,9 @@ def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_pl
         names.append(key.split('_')[0])
     merged = merged.dropna()
 
-    plot_reference(ax, x_plot, merged, dict_keys, axis_labels, fitfunc, False)
+    fit_params, squares, ndof, R2 = plot_reference(ax, x_plot, merged, dict_keys, axis_labels, fitfunc, False)
+    print(fit_params)
+    print(R2)
 
 def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels, fitfunc):
 
