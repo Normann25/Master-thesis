@@ -647,8 +647,8 @@ def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_pl
     merged = merged.dropna()
 
     fit_params, squares, ndof, R2 = plot_reference(ax, x_plot, merged, dict_keys, axis_labels, fitfunc, False)
-    print(fit_params)
-    print(R2)
+
+    return fit_params, squares, ndof, R2
 
 def plot_reference_LCS(ax, data_dict, dict_keys, start_time, end_time, concentration, axis_labels, fitfunc):
 
