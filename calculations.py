@@ -484,6 +484,7 @@ def merge_dicts(*dict_args):
     return result
 
 def AAE_calc(df, timestamps):
+    AAE_df = pd.DataFrame()
 
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1]) 
@@ -496,26 +497,30 @@ def AAE_calc(df, timestamps):
     conc_filter = time_filtered_df['IR BCc'] >= 0.25
     filtered_df = time_filtered_df[conc_filter]
 
+    # Wavelengths
+    wvl = [375, 470, 528, 625, 880]
+
     # Specific attenuation cross-section
     sigma = np.array([24.069, 19.070, 17.028, 14.091, 10.120]) # m**2/g
-    sigma_375 = 24.069 # m**2/g, UV
-    sigma_880 = 10.120 # m**2/g, IR
     Cref = 1.3 # Multiple scattering coefficient
 
     # Mass absorbtion cross section (MAC)
     MAC = sigma/Cref # m**2/g
-    MAC_375 = sigma_375/Cref # m**2/g, UV
-    MAC_880 = sigma_880/Cref # m**2/g, IR
     
-
     # Absorption coefficients for UV and IR
-    abs_375 = np.array(filtered_df['UV BCc'])*10**(-6)*MAC_375 # m**-1, UV
-    abs_880 = np.array(filtered_df['IR BCc'])*10**(-6)*MAC_880 # m**-1, IR
+    conc_keys = ['UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc']
+    abs_880 = np.array(filtered_df['IR BCc'])*10**(-6)*MAC[-1] # m**-1, IR
 
-    # Absorption Ångstrøm exponent (AAE)
-    AAE = -(np.log(abs_880/abs_375)/np.log(880/375))
+    for i, key in enumerate(conc_keys[:-1]):
+        b_abs = np.array(filtered_df[key])*10**(-6)*MAC[i]
 
-    return AAE
+        # Absorption Ångstrøm exponent (AAE)
+        AAE = -(np.log(abs_880/b_abs)/np.log(880/wvl[i]))
+
+        df_key = f'{key.split(' ')[0]} and IR'
+        AAE_df[df_key] = AAE
+
+    return AAE_df
 
 # Functions written by Anders Brostrøm
 def Partector_TEM_sampling(Partector_data, ignore_samplings_below=0):

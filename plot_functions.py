@@ -810,14 +810,15 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
 def AAE_hist(ax, df, timestamps, Nbins, fit_func, initial_guess):
 
     AAE = AAE_calc(df, timestamps)
-    AAE = AAE[np.isfinite(AAE)]
+    AAE_UV_IR = AAE['UV and IR']
+    AAE_UV_IR = AAE_UV_IR[np.isfinite(AAE_UV_IR)]
 
-    xmin, xmax = min(AAE), max(AAE)
+    xmin, xmax = min(AAE_UV_IR), max(AAE_UV_IR)
     binwidth = (xmax - xmin) / Nbins
 
-    ax.hist(AAE, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = 'r')
+    ax.hist(AAE_UV_IR, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = 'r')
 
-    fit_object = UnbinnedLH(fit_func, AAE, extended=True)
+    fit_object = UnbinnedLH(fit_func, AAE_UV_IR, extended=True)
     minuit = Minuit(fit_object, **initial_guess)
     minuit.errordef = 0.5
     minuit.migrad();
