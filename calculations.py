@@ -496,14 +496,19 @@ def AAE_calc(df, timestamps):
     conc_filter = time_filtered_df['IR BCc'] >= 0.25
     filtered_df = time_filtered_df[conc_filter]
 
+    # Specific attenuation coefficient
+    sigma_375 = 24.069 # m**2/g, UV
+    sigma_880 = 10.120 # m**2/g, IR
+    Cref = 1.3 # Correction facter
+
     # Mass absorbtion cross section (MAC)
-    MAC_375 = 24.069 # m**2/g, UV
-    MAC_880 = 10.120 # m**2/g, IR
-    Cref = 1.3 # m**2/g, mass absorption coefficient
+    MAC_375 = sigma_375/Cref # m**2/g, UV
+    MAC_880 = sigma_880/Cref # m**2/g, IR
+    
 
     # Specific attenuation cross sections for UV and IR
-    abs_375 = np.array(filtered_df['UV BCc'])*10**(-6)*(MAC_375/Cref) # UV
-    abs_880 = np.array(filtered_df['IR BCc'])*10**(-6)*(MAC_880/Cref) # IR
+    abs_375 = np.array(filtered_df['UV BCc'])*10**(-6)*(MAC_375) # UV
+    abs_880 = np.array(filtered_df['IR BCc'])*10**(-6)*(MAC_880) # IR
 
     # Absorption Ångstrøm exponent (AAE)
     AAE = -(np.log(abs_880/abs_375)/np.log(880/375))
