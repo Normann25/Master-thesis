@@ -374,3 +374,22 @@ def read_partector(path, parent_path, names):
                 new_dict[name] = df
     
     return new_dict
+
+def read_CPC(path, parent_path):
+   
+   files = file_list(path, parent_path)
+   new_dict = {}
+
+   for file in files:
+      name = file.split('.')[0]
+      try:
+         with open(os.path.join(path, file)) as f:
+            df = pd.read_csv(f, sep = ',', skiprows=2)[:-2]
+            df['Time'] = pd.to_datetime(df['Time'])
+      
+      except KeyError:
+         with open(os.path.join(path, file)) as f:
+            df = pd.read_csv(f, sep = ',', skiprows=17)[:-2]
+            df['Time'] = pd.to_datetime(df['Time'])
+      new_dict[name] = df
+   return new_dict
