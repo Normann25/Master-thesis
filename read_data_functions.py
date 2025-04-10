@@ -383,17 +383,16 @@ def read_CPC(path, parent_path):
 
     for file in files:
         name = file.split('.')[0]
-        try:
-            with open(os.path.join(path, file), 'rb') as rawdata:
-                result = chardet.detect(rawdata.read(10000))
-                encoding = result['encoding']
-
-            df = pd.read_csv(os.path.join(path, file), sep=',', skiprows=2, encoding=encoding)[:-2]
-            df['Time'] = pd.to_datetime(df['Time'])
-            
-        except KeyError:
-            with open(os.path.join(path, file)) as f:
-                df = pd.read_csv(f, sep = ',', skiprows=17)[:-2]
+        with open(os.path.join(path, file), 'rb') as rawdata:
+            result = chardet.detect(rawdata.read(10000))
+            encoding = result['encoding']
+            try:
+                df = pd.read_csv(os.path.join(path, file), sep=',', skiprows=2, encoding=encoding)[:-2]
                 df['Time'] = pd.to_datetime(df['Time'])
+                
+            except KeyError:
+                df = pd.read_csv(os.path.join(path, file), sep = ',', skiprows=17, encoding=encoding)[:-2]
+                df['Time'] = pd.to_datetime(df['Time'])
+
         new_dict[name] = df
     return new_dict
