@@ -4,6 +4,7 @@ import os
 import sys
 from datetime import datetime
 import linecache
+import chardet
 #%%
 def file_list(path, parent_path):
     ParentPath = os.path.abspath(parent_path)
@@ -376,20 +377,23 @@ def read_partector(path, parent_path, names):
     return new_dict
 
 def read_CPC(path, parent_path):
-   
-   files = file_list(path, parent_path)
-   new_dict = {}
 
-   for file in files:
-      name = file.split('.')[0]
-      try:
-         with open(os.path.join(path, file)) as f:
-            df = pd.read_csv(f, sep = ',', skiprows=2)[:-2]
+    files = file_list(path, parent_path)
+    new_dict = {}
+
+    for file in files:
+        name = file.split('.')[0]
+        try:
+            with open(os.path.join(path, file), 'rb') as rawdata:
+                result = chardet.detect(rawdata.read(10000))
+                encoding = result['encoding']
+
+            df = pd.read_csv(os.path.join(path, file), sep=',', skiprows=2, encoding=encoding)[:-2]
             df['Time'] = pd.to_datetime(df['Time'])
-      
-      except KeyError:
-         with open(os.path.join(path, file)) as f:
-            df = pd.read_csv(f, sep = ',', skiprows=17)[:-2]
-            df['Time'] = pd.to_datetime(df['Time'])
-      new_dict[name] = df
-   return new_dict
+            
+        except KeyError:
+            with open(os.path.join(path, file)) as f:
+                df = pd.read_csv(f, sep = ',', skiprows=17)[:-2]
+                df['Time'] = pd.to_datetime(df['Time'])
+        new_dict[name] = df
+    return new_dict
