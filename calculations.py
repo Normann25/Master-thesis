@@ -517,7 +517,8 @@ def AAE_calc(df, timestamps):
         # Absorption Ångstrøm exponent (AAE)
         AAE = -(np.log(abs_880/b_abs)/np.log(880/wvl[i]))
 
-        df_key = f'{key.split(' ')[0]} and IR'
+        conc = key.split(' ')[0]
+        df_key = f'{conc} and IR'
         AAE_df[df_key] = AAE
 
     return AAE_df
