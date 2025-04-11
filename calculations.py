@@ -511,7 +511,7 @@ def AAE_calc(df, timestamps):
     conc_keys = ['UV BCc', 'Blue BCc', 'Green BCc', 'Red BCc']
     abs_880 = np.array(filtered_df['IR BCc'])*10**(-6)*MAC[-1] # m**-1, IR
 
-    for i, key in enumerate(conc_keys[:-1]):
+    for i, key in enumerate(conc_keys):
         b_abs = np.array(filtered_df[key])*10**(-6)*MAC[i]
 
         # Absorption Ångstrøm exponent (AAE)
