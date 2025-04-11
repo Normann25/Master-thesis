@@ -838,8 +838,8 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
             ax.hist(AAE_plot, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = colors[j])
 
             if fit_func != None:
-                fit_object = UnbinnedLH(fit_func, AAE_plot, extended=True)
-                minuit = Minuit(fit_object, **initial_guess_list[i][j])
+                fit_object = UnbinnedLH(fit_func[j][i], AAE_plot, extended=True)
+                minuit = Minuit(fit_object, **initial_guess_list[j][i])
                 minuit.errordef = 0.5
                 minuit.migrad();
                 print(minuit.values)
