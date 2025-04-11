@@ -846,7 +846,7 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
                 print(minuit.errors)
 
                 x_fit = np.linspace(xmin, xmax, 1000)
-                y_fit = fit_func(x_fit, *minuit.values) * binwidth
+                y_fit = fit_func[j][i](x_fit, *minuit.values) * binwidth
                 ax.plot(x_fit, y_fit, ls = '--', color = 'k', lw = 1, label = 'Fit')
 
             else:
