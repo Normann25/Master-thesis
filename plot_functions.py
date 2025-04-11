@@ -807,28 +807,52 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
 
     return a_array, b_array, R2_array
 
-def AAE_hist(ax, df, timestamps, Nbins, fit_func, initial_guess):
+def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, fit_func, initial_guess_list):
+    fig1, ax1 = plt.subplots(rows, columns, figsize = fig_size)
+    fig2, ax2 = plt.subplots(rows, columns, figsize = fig_size)
+    fig3, ax3 = plt.subplots(rows, columns, figsize = fig_size)
+    fig4, ax4 = plt.subplots(rows, columns, figsize = fig_size)
 
-    AAE = AAE_calc(df, timestamps)
-    AAE_UV_IR = AAE['UV and IR']
-    AAE_UV_IR = AAE_UV_IR[np.isfinite(AAE_UV_IR)]
+    ax_list, fig_list = [ax1, ax2, ax3, ax4], [fig1, fig2, fig3, fig4]
 
-    xmin, xmax = min(AAE_UV_IR), max(AAE_UV_IR)
-    binwidth = (xmax - xmin) / Nbins
+    for i, key in enumerate(dict_keys):
+        df = data_dict[key]
 
-    ax.hist(AAE_UV_IR, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = 'r')
+        if len(np.array(timestamps).flatten()) == 2:
+            print(timestamps[0])
+            AAE = AAE_calc(df, timestamps)
+        else:
+            print(timestamps[i][0])
+            AAE = AAE_calc(df, timestamps[i])
 
-    fit_object = UnbinnedLH(fit_func, AAE_UV_IR, extended=True)
-    minuit = Minuit(fit_object, **initial_guess)
-    minuit.errordef = 0.5
-    minuit.migrad();
-    print(minuit.values)
+        for j, ax in enumerate(ax_list):
 
-    x_fit = np.linspace(xmin, xmax, 1000)
-    y_fit = fit_func(x_fit, *minuit.values) * binwidth
-    ax.plot(x_fit, y_fit, ls = '--', color = 'k', lw = 1, label = 'Fit')
+            AAE_plot = AAE[AAE.keys()[j]]
+            AAE_plot = AAE_plot[np.isfinite(AAE_plot)]
 
-    ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
-    ax.legend(fontsize = 8)
+            xmin, xmax = min(AAE_plot), max(AAE_plot)
+            binwidth = (xmax - xmin) / Nbins
 
-    return AAE, np.array(minuit.values, dtype = np.float64) 
+            ax.hist(AAE_plot, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = 'r')
+
+            if fit_func != None:
+                fit_object = UnbinnedLH(fit_func, AAE_plot, extended=True)
+                minuit = Minuit(fit_object, **initial_guess_list[i][j])
+                minuit.errordef = 0.5
+                minuit.migrad();
+                print(minuit.values)
+                print(minuit.errors)
+
+                x_fit = np.linspace(xmin, xmax, 1000)
+                y_fit = fit_func(x_fit, *minuit.values) * binwidth
+                ax.plot(x_fit, y_fit, ls = '--', color = 'k', lw = 1, label = 'Fit')
+
+            else:
+                mean = AAE_plot.mean()
+                error = AAE_plot.std() / np.sqrt(len(AAE_plot))
+                print(f'Mean AAE = {mean}+-{error}')
+
+            ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
+            ax.legend(fontsize = 8)
+
+    return ax_list, fig_list, AAE
