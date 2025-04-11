@@ -814,26 +814,28 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
     fig4, ax4 = plt.subplots(rows, columns, figsize = fig_size)
 
     ax_list, fig_list = [ax1, ax2, ax3, ax4], [fig1, fig2, fig3, fig4]
+    colors = ['darkviolet', 'blue', 'green', 'red']
 
-    for i, key in enumerate(dict_keys):
-        df = data_dict[key]
+    for j, axs in enumerate(ax_list):
+        for i, ax in enumerate(axs.flatten()):
+            df = data_dict[dict_keys[i]]
 
-        if len(np.array(timestamps).flatten()) == 2:
-            print(timestamps[0])
-            AAE = AAE_calc(df, timestamps)
-        else:
-            print(timestamps[i][0])
-            AAE = AAE_calc(df, timestamps[i])
-
-        for j, ax in enumerate(ax_list):
+            if len(np.array(timestamps).flatten()) == 2:
+                print(timestamps[0])
+                AAE = AAE_calc(df, timestamps)
+            else:
+                print(timestamps[i][0])
+                AAE = AAE_calc(df, timestamps[i])
 
             AAE_plot = AAE[AAE.keys()[j]]
             AAE_plot = AAE_plot[np.isfinite(AAE_plot)]
 
+            print(AAE.keys()[j])
+
             xmin, xmax = min(AAE_plot), max(AAE_plot)
             binwidth = (xmax - xmin) / Nbins
 
-            ax.hist(AAE_plot, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = 'r')
+            ax.hist(AAE_plot, bins = Nbins, histtype = 'step', label = 'AAE', range = (xmin, xmax), color = colors[j])
 
             if fit_func != None:
                 fit_object = UnbinnedLH(fit_func, AAE_plot, extended=True)
@@ -855,4 +857,4 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
             ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
             ax.legend(fontsize = 8)
 
-    return ax_list, fig_list, AAE
+    return fig_list, ax_list, AAE
