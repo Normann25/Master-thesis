@@ -515,7 +515,7 @@ def AAE_calc(df, timestamps):
         b_abs = np.array(filtered_df[key])*10**(-6)*MAC[i]
 
         # Absorption Ångstrøm exponent (AAE)
-        AAE = -(np.log(abs_880/b_abs)/np.log(880/wvl[i]))
+        AAE = -(np.log(b_abs/abs_880)/np.log(wvl[i]/880))
 
         conc = key.split(' ')[0]
         df_key = f'{conc} and IR'
