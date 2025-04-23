@@ -807,7 +807,7 @@ def MA_correction_multi(ax, df, keys, conc, xlabels, guess, lbl):
 
     return a_array, b_array, R2_array
 
-def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, fit_func, initial_guess_list):
+def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, fit_func, initial_guess_list, remove_outliers):
     fig1, ax1 = plt.subplots(rows, columns, figsize = fig_size)
     fig2, ax2 = plt.subplots(rows, columns, figsize = fig_size)
     fig3, ax3 = plt.subplots(rows, columns, figsize = fig_size)
@@ -826,6 +826,12 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
             else:
                 print(timestamps[i][0])
                 AAE = AAE_calc(df, timestamps[i])
+
+            if remove_outliers:
+                q_low = AAE[AAE.keys()[j]].quantile(0.01)
+                q_high = AAE[AAE.keys()[j]].quantile(0.99)
+
+                AAE = AAE[(AAE[AAE.keys()[j]] < q_high) & (AAE[AAE.keys()[j]] > q_low)]
 
             AAE_plot = AAE[AAE.keys()[j]]
             AAE_plot = AAE_plot[np.isfinite(AAE_plot)]
