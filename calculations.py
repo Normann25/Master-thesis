@@ -379,7 +379,7 @@ def split_data_timestamps(df, timestamps, timelabel, concentration):
 
     return new_df
 
-def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, large_Dp_keys, large_Dp_interval, timestamps, timelabel, running, round):
+def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, large_Dp_keys, large_Dp_interval, timestamps, timelabel, running, round, rho):
     new_dict_number = {}
     new_dict_mass = {}
 
@@ -429,7 +429,10 @@ def merge_data(dict_small_Dp, small_Dp_keys, small_Dp_interval, dict_large_Dp, l
         merged = pd.merge(df_small, df_large, on = 'Time')
         merged = merged.reset_index()
 
-        merged_mass = calc_mass_conc(merged, merged_keys, merged_bin_mean, 1.2)
+        if len(rho) > 1:
+            merged_mass = merged_mass = calc_mass_conc(merged, merged_keys, merged_bin_mean, rho[i])
+        else:
+            merged_mass = calc_mass_conc(merged, merged_keys, merged_bin_mean, rho[0])
 
         new_dict_number[name] = merged
         new_dict_mass[name] = merged_mass
