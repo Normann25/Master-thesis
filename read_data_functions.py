@@ -168,6 +168,11 @@ def read_LCS_data(path, parent_path, time_label, hour, L_to_cm3, corrected):
         if file.endswith('.csv'):
             df = pd.read_csv(os.path.join(path, file), sep=',', decimal='.')
 
+        try:
+            df = df.drop(['GNSS_LAT', 'GNSS_LON'], axis = 1)
+        except KeyError:
+            pass
+
         # Convert additional columns to numeric if they exist
         if 'SPS30_PM2.5' in df.columns:
             df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
