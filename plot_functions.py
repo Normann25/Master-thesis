@@ -10,7 +10,7 @@ sys.path.append('..')
 from calculations import *
 from ExternalFunctions import *
 #%%
-def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
+def plot_Conc(ax, fig, data_dict, dict_keys, concentration, ylabel):
     for i, dict_key in enumerate(dict_keys):
         df = data_dict[dict_key]
         #for j, key in enumerate(df.keys()[1:]):
@@ -19,12 +19,6 @@ def plot_Conc_ACSM(ax, fig, data_dict, dict_keys, concentration, ylabel):
 
         # Set the x-axis major formatter to a date format
         ax[i].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-
-        # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-        ax[i].xaxis.set_major_locator(mdates.AutoDateLocator())
-
-        # Rotate and format date labels
-        plt.setp(ax[i].xaxis.get_majorticklabels()) #, rotation=45, ha='right')
 
         ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
         ax[i].set_title(dict_key, fontsize = 9)
@@ -39,7 +33,7 @@ def plot_inset(ax, height, loc, bb2a, plot_width, xdata, ydata, width, bar, time
                             bbox_to_anchor = bb2a,
                             bbox_transform = ax.transAxes) # placement in figure
     if bar:
-        inset_ax.bar(xdata, ydata, width)
+        artist = inset_ax.bar(xdata, ydata, width)
     
     if timeseries:
         start_time = pd.to_datetime(timestamps[0])
@@ -51,18 +45,14 @@ def plot_inset(ax, height, loc, bb2a, plot_width, xdata, ydata, width, bar, time
         conc = np.array(ydata)
         conc = pd.to_numeric(conc, errors='coerce')
         filtered_conc = conc[time_filter]
-        inset_ax.plot(filtered_time, filtered_conc)
+        artist = inset_ax.plot(filtered_time, filtered_conc)
 
         # Set the x-axis major formatter to a date format
         inset_ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-        # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-        inset_ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-        # Rotate and format date labels
-        plt.setp(inset_ax.xaxis.get_majorticklabels(), size = 8)
 
     inset_ax.set(xlabel = None, ylabel = None)
 
-    return inset_ax
+    return artist, inset_ax
     
 def plot_MS(ax, df, conc, width, ttl):
     ax.bar(df['m/z'], df[conc], width)
@@ -80,12 +70,10 @@ def plot_MS_wInset(ax, data_dict, dict_keys, conc, height, loc, bb2a, widths, ti
         ax[i].set_xlim(0, 300)
 
         mask = df['m/z'] >= 100
-        inset_ax = plot_inset(ax[i], height, loc, bb2a, '60%', df['m/z'][mask], df[conc][mask], widths[1], True, False, None)
+        artist, inset_ax = plot_inset(ax[i], height, loc, bb2a, '60%', df['m/z'][mask], df[conc][mask], widths[1], True, False, None)
 
         inset_ax.set(xlim = (100, 300))
 
-
-    
 def discmini_single_timeseries(ax, df, n):
     p1, = ax.plot(df['Time'], df['Number'], lw = 1, label = 'Number concentration', color = 'tab:blue')
     ax2 = ax.twinx()
@@ -96,12 +84,6 @@ def discmini_single_timeseries(ax, df, n):
     # Set the x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    ax2.xaxis.set_major_locator(mdates.AutoDateLocator())
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels())
-    plt.setp(ax2.xaxis.get_majorticklabels())
 
     ylim = np.array(ax.get_ylim())
     ratio = ylim / np.sum(np.abs(ylim))
@@ -154,10 +136,6 @@ def ma_single_timeseries(ax, df, screening, timestamps, loc):
 
     # Set the x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
 
     ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha="left")
 
@@ -195,20 +173,14 @@ def plot_LCS_single(ax, data_dict, dict_key, timelabel, start_time, end_time, co
     # Set x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
 
-    # Set the locator for the x-axis
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels())
-
     # Set tick parameters and title
     ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
     ax.set_title(dict_key, fontsize=9)
     ax.set_ylabel(ylabel, fontsize = 8)
 
-def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, ylabel):
+def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, timelabel, ylabel):
     for i, dict_key in enumerate(dict_keys):
-        plot_LCS_single(ax[i], data_dict, dict_key, 'timestamp', start_time, end_time, concentration, ylabel[i])
+        plot_LCS_single(ax[i], data_dict, dict_key, timelabel, start_time, end_time, concentration, ylabel[i])
 
     # Add common x and y labels for the figure
     fig.supxlabel('Time / HH:MM', fontsize=10)
@@ -219,7 +191,7 @@ def plot_LCS_WS(ax, fig, data_dict, start_time, end_time, titles):
         plot_LCS_single(ax[i], data_dict, 'LCS0104', st, end_time[i], 'SPS30_PM2.5', 'PM$_{2.5}$ / $\mu$g/m$^{3}$')
         plot_LCS_single(ax[i], data_dict, 'PM25', st, end_time[i], 'Conc', 'PM$_{2.5}$ / $\mu$g/m$^{3}$')
         # handles, = ax[i].get_legend_handles_labels()
-        ax[i].legend(labels = ['LCS 0076', 'LCS 0104', 'Weather station'], frameon = False, fontsize = 8)
+        ax[i].legend(labels = ['LCS 0076', 'LCS 0104', 'Weather station'])
         ax[i].set_title(titles[i])
 
     # Add common x and y labels for the figure
