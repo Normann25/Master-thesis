@@ -168,19 +168,20 @@ def plot_LCS_single(ax, data_dict, dict_key, timelabel, start_time, end_time, co
     Conc_filtered = Conc[time_filter]
 
     # Plot the filtered data
-    ax.plot(time_filtered, Conc_filtered, lw=1)
+    artist = ax.plot(time_filtered, Conc_filtered, lw=1)
 
     # Set x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
 
-    # Set tick parameters and title
-    ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
     ax.set_title(dict_key, fontsize=9)
     ax.set_ylabel(ylabel, fontsize = 8)
 
-def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, timelabel, ylabel):
+    return artist
+
+def plot_LCS(ax, fig, data_dict, dict_keys, start_time, end_time, concentration, timelabel, ylabel, color):
     for i, dict_key in enumerate(dict_keys):
-        plot_LCS_single(ax[i], data_dict, dict_key, timelabel, start_time, end_time, concentration, ylabel[i])
+        artist = plot_LCS_single(ax[i], data_dict, dict_key, timelabel, start_time, end_time, concentration, ylabel[i])
+        artist[0].set_color(color)
 
     # Add common x and y labels for the figure
     fig.supxlabel('Time / HH:MM', fontsize=10)
@@ -214,10 +215,6 @@ def partector_single_timeseries(ax, df, timestamps, loc):
 
     # Set the x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
-    # Set the locator for the x-axis (optional, depending on how you want to space the ticks)
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels(), size = 8)
 
     ax.set_xlabel('Time / HH:MM', fontsize = 9)
     ax.set_ylabel('LDSA / $\mu$m$^{2}$cm$^{-3}$', fontsize = 9)
