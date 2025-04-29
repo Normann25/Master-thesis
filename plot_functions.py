@@ -114,14 +114,6 @@ def plot_LCS_single(ax, data_dict, dict_key, start_time, end_time, concentration
     # Set x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
 
-    # Set the locator for the x-axis
-    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-
-    # Rotate and format date labels
-    plt.setp(ax.xaxis.get_majorticklabels())
-
-    # Set tick parameters and title
-    ax.tick_params(axis='both', which='major', direction='out', bottom=True, left=True, labelsize=8)
     ax.set_title(dict_key, fontsize=9)
     ax.set_ylabel(ylabel, fontsize = 8)
 

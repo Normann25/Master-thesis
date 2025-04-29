@@ -167,8 +167,11 @@ def read_LCS_data(path, parent_path, time_label, hour):
                 df = pd.read_csv(f, sep=';', decimal='.')
                     
         # Process the timestamp column
-        df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
-        
+        try:
+            df[time_label] = format_timestamps(df[time_label], '%Y-%m-%d %H:%M:%S', '%d/%m/%Y %H:%M')
+        except ValueError:
+            df[time_label] = format_timestamps(df[time_label], '%d-%m-%Y %H:%M', '%d/%m/%Y %H:%M')
+
         # Convert additional columns to numeric if they exist
         if 'SPS30_PM2.5' in df.columns:
             df['SPS30_PM2.5'] = pd.to_numeric(df['SPS30_PM2.5'], errors='coerce')
