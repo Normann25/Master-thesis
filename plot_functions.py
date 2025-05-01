@@ -825,9 +825,9 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
                 ax.plot(x_fit, y_fit, ls = '--', color = 'k', lw = 1, label = 'Fit')
 
             else:
-                mean = AAE_plot.mean()
-                error = AAE_plot.std() / np.sqrt(len(AAE_plot))
-                print(f'Mean AAE = {mean}+-{error}')
+                min_AAE, max_AAE = min(AAE_plot), max(AAE_plot)
+                mean, error = AAE_plot.mean(), AAE_plot.std() / np.sqrt(len(AAE_plot))
+                print(f'Mean AAE = {mean:.3f}+-{error:.4f}, min AAE = {min_AAE:.3f}, max AAE = {max_AAE:.3f}')
 
             ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
             ax.legend(fontsize = 8)
