@@ -269,7 +269,7 @@ def plot_total(ax, df, conc_key, clr, lstyle):
     plt.subplots_adjust(hspace=0.05)
     return ax
 
-def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, normed, cutpoint):
+def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, normed, total, cutpoint):
     
     start_time = pd.to_datetime(timestamps[0])
     end_time = pd.to_datetime(timestamps[1])
@@ -291,12 +291,20 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
             filtered_number, filtered_mass = conc_number[time_filter], conc_mass[time_filter]
 
             new_df_number[key], new_df_mass[key] = filtered_number, filtered_mass
-        
-        ax1, p1 = plot_heatmap(ax[0][0], new_df_number, filtered_time, bin_edges, cutpoint, normed)
-        ax2, p2 = plot_heatmap(ax[0][1], new_df_mass, filtered_time, bin_edges, cutpoint, normed)
 
-        ax3 = plot_total(ax[1][0], new_df_number, None, None, None)
-        ax4 = plot_total(ax[1][1], new_df_mass, None, None, None)
+        if total:
+            ax1, p1 = plot_heatmap(ax[0][0], new_df_number, filtered_time, bin_edges, cutpoint, normed)
+            ax2, p2 = plot_heatmap(ax[0][1], new_df_mass, filtered_time, bin_edges, cutpoint, normed)
+
+            ax3 = plot_total(ax[1][0], new_df_number, None, None, None)
+            ax4 = plot_total(ax[1][1], new_df_mass, None, None, None)
+
+            ax3.set_ylabel('Total number conc. / cm$^{-3}$')
+            ax4.set_ylabel('Total mass conc. / $\mu$g m$^{-3}$')
+
+        else:
+            ax1, p1 = plot_heatmap(ax[0], new_df_number, filtered_time, bin_edges, cutpoint, normed)
+            ax2, p2 = plot_heatmap(ax[1], new_df_mass, filtered_time, bin_edges, cutpoint, normed)
 
         # Insert coloarbar and label it
         col1 = fig.colorbar(p1, ax=ax1)
@@ -304,13 +312,6 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
         col1.set_label('dN/dlogDp / cm$^{-3}$')
         col2.set_label('dM/dlogDp / $\mu$g m$^{-3}$')
-        
-        ax3.set_ylabel('Total number conc. / cm$^{-3}$')
-        ax4.set_ylabel('Total mass conc. / $\mu$g m$^{-3}$')
-
-        # Set ticks on the plot to be longer
-        ax1.tick_params(axis="y",which="both",direction='out')
-        ax2.tick_params(axis="y",which="both",direction='out')
 
     else:
         time = pd.to_datetime(df['Time'])
@@ -328,22 +329,25 @@ def plot_timeseries(fig, ax, df, df_keys, bin_edges, datatype, timestamps, norme
 
             new_df[key] = filtered_conc
 
-        ax1, p1 = plot_heatmap(ax[0], new_df, filtered_time, bin_edges, cutpoint, normed)
+        if total:
+            ax1, p1 = plot_heatmap(ax[0], new_df, filtered_time, bin_edges, cutpoint, normed)
 
-        ax2 = plot_total(ax[1], new_df, None, None, None)
+            ax2 = plot_total(ax[1], new_df, None, None, None)
+
+        else:
+            ax1, p1 = plot_heatmap(ax, new_df, filtered_time, bin_edges, cutpoint, normed)
 
         # Insert coloarbar and label it
         col = fig.colorbar(p1, ax=ax1)
         if datatype == "number":
             col.set_label('dN/dlogDp / cm$^{-3}$')
-            ax2.set_ylabel('Total concentration / cm$^{-3}$')
+            if total:
+                ax2.set_ylabel('Total concentration / cm$^{-3}$')
         elif datatype == "mass":
             col.set_label('dM/dlogDp / $\mu$g m$^{-3}$')
-            ax2.set_ylabel('Total concentration / $\mu$g m$^{-3}$')
+            if total:
+                ax2.set_ylabel('Total concentration / $\mu$g m$^{-3}$')
 
-        # Set ticks on the plot to be longer
-        ax1.tick_params(axis="y",which="both",direction='out')
-        ax2.tick_params(axis="y",which="both",direction='out')
 
 def plot_bin_mean(ax, timestamps, df_number, df_mass, df_keys, timelabel, bin_means, bin_edges, inst_error, cut_point, mass):
     mean_number, std_number, error_number = bin_mean(timestamps, df_number, df_keys, timelabel, inst_error)
