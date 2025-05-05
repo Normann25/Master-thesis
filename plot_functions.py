@@ -20,7 +20,6 @@ def plot_Conc(ax, fig, data_dict, dict_keys, concentration, ylabel):
         # Set the x-axis major formatter to a date format
         ax[i].xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
 
-        ax[i].tick_params(axis = 'both', which = 'major', direction = 'out', bottom = True, left = True, labelsize = 8)
         ax[i].set_title(dict_key, fontsize = 9)
     fig.supxlabel('Time / HH:MM', fontsize = 10)
     fig.supylabel(ylabel, fontsize = 10)
