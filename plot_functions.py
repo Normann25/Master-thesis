@@ -836,3 +836,22 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
             ax.legend(fontsize = 8)
 
     return fig_list, ax_list, AAE
+
+def PMF_MS_validation(axes, PMF_df, PMF_key, Ref_dict, Ref_dict_keys, Ref_df_keys):
+    for i, key in enumerate(Ref_dict_keys):
+        merged = pd.merge(PMF_df, Ref_dict[key], on = 'm/z')
+        PMF_total_int, Ref_total_int = pd.to_numeric(merged[PMF_key], errors = 'coerce').sum(), pd.to_numeric(merged[Ref_df_keys[i]], errors = 'coerce').sum()
+        merged['PMF scaled'] = pd.to_numeric(merged[PMF_key], errors = 'coerce') / PMF_total_int
+        merged['Ref scaled'] = pd.to_numeric(merged[Ref_df_keys[i]], errors = 'coerce') / Ref_total_int
+
+        fit_params, fit_errors, Ndof_fit, squares_fit, R2 = linear_fit(merged['PMF scaled'], merged['Ref scaled'], linear, a_guess = 1, b_guess = 0)
+        y_fit = linear(merged['PMF scaled'], *fit_params)
+
+        axes[i].plot(merged['PMF scaled'], y_fit, label = 'Fit', color = 'k', lw = 1.2)
+        axes[i].scatter(merged['PMF scaled'], merged['Ref scaled'], s = 10, c = 'blue', label = None)
+
+        axes[i].legend()
+
+        print(f'({fit_params[0]:.3f} +- {fit_errors[0]:.4f})x + ({fit_params[1]:.3f} +- {fit_errors[1]:.4f}), R2 = {R2}')
+
+    return axes
