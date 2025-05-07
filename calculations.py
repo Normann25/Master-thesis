@@ -42,7 +42,8 @@ def lognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2):
 def dlognorm_gauss(x, p1, mu1, sigma1, p2, mu2, sigma2, p3, mu3, sigma3):
     return p1*stats.lognorm.pdf(x, scale = mu1, s = sigma1) + p2*stats.lognorm.pdf(x, scale = mu2, s = sigma2) + p3*stats.norm.pdf(x, mu3, sigma3)
 #%%
-def time_filtered_arrays(df, date, timestamps, conc_key):
+def time_filtered_df(df, date, timestamps, conc_key):
+
     if date == None:
         start_time = pd.to_datetime(timestamps[0])
         end_time = pd.to_datetime(timestamps[1])  
@@ -55,10 +56,22 @@ def time_filtered_arrays(df, date, timestamps, conc_key):
     time_filter = (time >= start_time) & (time <= end_time)
     filtered_time = np.array(time[time_filter])
 
-    conc = np.array(df[conc_key])
-    conc = pd.to_numeric(conc, errors='coerce')
-    filtered_conc = conc[time_filter]
-    return filtered_time, filtered_conc
+    new_df = pd.DataFrame({'Time': filtered_time})
+
+    if len(conc_key) > 1:
+        for key in conc_key:
+            conc = np.array(df[key])
+            conc = pd.to_numeric(conc, errors = 'coerce')
+            filtered_conc = conc[time_filter]
+            new_df[key] = filtered_conc
+
+    else:
+        conc = np.array(df[conc_key[0]])
+        conc = pd.to_numeric(conc, errors='coerce')
+        filtered_conc = conc[time_filter]
+        new_df[conc_key[0]] = filtered_conc
+
+    return new_df
 
 def get_corrected(path, uncorrected, device_id, correction, data_type):
     corrected = {}
