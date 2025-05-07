@@ -131,7 +131,6 @@ def ma_single_timeseries(ax, df, screening, timestamps, loc):
             conc = pd.to_numeric(conc, errors='coerce')
             filtered_conc = conc[time_filter]
             ax.plot(filtered_time, filtered_conc, color = clr, label = key)
-            ax.legend(frameon = False, fontsize = 8, loc = loc)
 
     # Set the x-axis major formatter to a date format
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
