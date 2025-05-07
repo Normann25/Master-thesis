@@ -53,8 +53,8 @@ def plot_inset(ax, height, loc, bb2a, plot_width, xdata, ydata, width, bar, time
 
     return artist, inset_ax
     
-def plot_MS(ax, df, conc, width, ttl):
-    ax.bar(df['m/z'], df[conc], width)
+def plot_MS(ax, df, conc, width, ttl, color):
+    ax.bar(df['m/z'], df[conc], width, color = color)
 
     ax.set(xlabel = 'm/z', ylabel = 'Intensity', title = ttl)
 
@@ -64,7 +64,7 @@ def plot_MS_wInset(ax, data_dict, dict_keys, conc, height, loc, bb2a, widths, ti
         zero_mask = df[conc] >= 0
         df = df[zero_mask]
 
-        plot_MS(ax[i], df, conc, widths[0], titles[i])
+        plot_MS(ax[i], df, conc, widths[0], titles[i], 'tab:blue')
         
         ax[i].set_xlim(0, 300)
 
