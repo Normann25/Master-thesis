@@ -594,7 +594,7 @@ def plot_reference(ax, x_plot, data, keys, labels, fitfunc, forced_zero):
         # Set labels and title for the scatter plot
         ax.set_xlabel(labels[0], fontsize=8)
         ax.set_ylabel(labels[1], fontsize=8)
-        ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
+        # ax.set(xlim = (min(x_plot), max(x_plot)), ylim = (min(x_plot), max(x_plot)))
 
         ax.legend(fontsize = 8)
 
