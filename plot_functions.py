@@ -832,7 +832,7 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
                 print(f'Mean AAE = {mean:.3f}+-{error:.4f}, AAE 25% quantile = {AAE_25:.3f}, AAE 75% quantile = {AAE_75:.3f}')
 
             ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
-            ax.legend(fontsize = 8)
+            ax.legend(fontsize = 8, bbox_to_anchor = (0.25, 0.90, 0, 0))
 
     return fig_list, ax_list, AAE
 
