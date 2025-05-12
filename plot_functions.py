@@ -838,18 +838,30 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
 
     return fig_list, ax_list, AAE
 
-def PMF_MS_validation(axes, PMF_df, PMF_key, Ref_dict, Ref_dict_keys, Ref_df_keys):
+def PMF_MS_validation(axes, PMF_df, PMF_key, Ref_dict, Ref_dict_keys, Ref_df_keys, markers, marker_colors):
     for i, key in enumerate(Ref_dict_keys):
         merged = pd.merge(PMF_df, Ref_dict[key], on = 'm/z')
         PMF_total_int, Ref_total_int = pd.to_numeric(merged[PMF_key], errors = 'coerce').sum(), pd.to_numeric(merged[Ref_df_keys[i]], errors = 'coerce').sum()
         merged['PMF scaled'] = pd.to_numeric(merged[PMF_key], errors = 'coerce') / PMF_total_int
         merged['Ref scaled'] = pd.to_numeric(merged[Ref_df_keys[i]], errors = 'coerce') / Ref_total_int
 
-        fit_params, fit_errors, Ndof_fit, squares_fit, R2 = linear_fit(merged['PMF scaled'], merged['Ref scaled'], linear, a_guess = 1, b_guess = 0)
-        y_fit = linear(merged['PMF scaled'], *fit_params)
+        max_PMF, max_Ref = max(merged['PMF scaled']), max(merged['Ref scaled'])
+        if max_PMF > max_Ref:
+            x_plot = np.linspace(0, max_PMF + 0.1*max_PMF, 200)
+        else:
+            x_plot = np.linspace(0, max_Ref + 0.1*max_Ref, 200)
+        axes[i].plot(x_plot, x_plot, color = 'grey', lw = 1, ls = '--')
 
-        axes[i].plot(merged['PMF scaled'], y_fit, label = 'Fit', color = 'k', lw = 1.2)
+        fit_params, fit_errors, Ndof_fit, squares_fit, R2 = linear_fit(merged['PMF scaled'], merged['Ref scaled'], linear, a_guess = 1, b_guess = 0)
+        y_fit = linear(x_plot, *fit_params)
+
+        axes[i].plot(x_plot, y_fit, label = 'Fit', color = 'k', lw = 1.2)
         axes[i].scatter(merged['PMF scaled'], merged['Ref scaled'], s = 10, c = 'blue', label = None)
+
+        for idx, row in merged.iterrows():
+            for color, marker in zip(marker_colors, markers):
+                if marker == row['m/z']:
+                    axes[i].scatter(row['PMF scaled'], row['Ref scaled'], color = color, s = 15)
 
         axes[i].legend()
 
