@@ -825,14 +825,16 @@ def AAE_hist(rows, columns, fig_size, data_dict, dict_keys, timestamps, Nbins, f
                 x_fit = np.linspace(xmin, xmax, 1000)
                 y_fit = fit_func[j][i](x_fit, *minuit.values) * binwidth
                 ax.plot(x_fit, y_fit, ls = '--', color = 'k', lw = 1, label = 'Fit')
+                ax.legend(fontsize = 8, bbox_to_anchor = (0.25, 0.90, 0, 0))
 
             else:
                 AAE_25, AAE_75 = AAE_plot.quantile(0.25), AAE_plot.quantile(0.75)
                 mean, error = AAE_plot.mean(), AAE_plot.std() / np.sqrt(len(AAE_plot))
+                ax.legend(fontsize = 8)
                 print(f'Mean AAE = {mean:.3f}+-{error:.4f}, AAE 25% quantile = {AAE_25:.3f}, AAE 75% quantile = {AAE_75:.3f}')
 
             ax.set(xlabel = 'Ångstrøm exponent', ylabel = 'Count')
-            ax.legend(fontsize = 8, bbox_to_anchor = (0.25, 0.90, 0, 0))
+            
 
     return fig_list, ax_list, AAE
 
