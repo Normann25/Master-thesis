@@ -598,7 +598,7 @@ def plot_reference(ax, x_plot, data, keys, labels, fitfunc, forced_zero):
 
         ax.legend(fontsize = 8)
 
-    return fit_params, squares, ndof, R2
+    return fit_params, fit_errors, squares, ndof, R2
 
 def plot_reference_same(ax, data_dict, dict_keys, concentration, timelabel, x_plot, axis_labels, fitfunc):
 
