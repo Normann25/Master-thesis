@@ -750,6 +750,8 @@ def LCS_calibration_plot(plotz, figsize, df, fitfunc):
 def MA_correction_single(ax, xval, yval, guess, lbl):
     
     fit_params, fit_errors, squares, ndof, R2 = linear_fit(xval, yval, linear, a_guess = guess[0], b_guess = guess[1])
+    print(fit_params, R2)
+    print(fit_errors)
     a, b = fit_params[0], fit_params[1]
     y_fit = a*xval + b
 
