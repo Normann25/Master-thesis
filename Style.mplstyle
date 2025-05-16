@@ -1,5 +1,5 @@
 axes.titlesize : 12
-axes.labelsize : 9
+axes.labelsize : 10
 axes.xmargin : 0
 axes.formatter.limits : -2, 3
 
